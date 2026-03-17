@@ -34,3 +34,15 @@
 	text-transform: uppercase;
 	color: var(--color-accent);
 }
+
+.action {
+	margin-top: auto;
+	align-self: flex-start;
+	padding: 0.7rem 1rem;
+	border: 0;
+	border-radius: 999px;
+	background: rgba(15, 23, 42, 0.08);
+	color: var(--color-text);
+	font-weight: 600;
+	cursor: pointer;
+}

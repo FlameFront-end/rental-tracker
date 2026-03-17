@@ -1,3 +1,4 @@
+import { useAuthSession } from '@/app/model/use-auth-session'
 import { useHealthCheck } from '@/shared/api/services/health'
 import { env } from '@/shared/model'
 import { Layout } from '@/shared/widgets'
@@ -5,12 +6,13 @@ import { Layout } from '@/shared/widgets'
 import styles from './dashboard.module.scss'
 
 const DashboardPage = () => {
+	const { logout, user } = useAuthSession()
 	const { data, isLoading, isError, error } = useHealthCheck()
 
 	return (
 		<Layout
 			title='Rental Tracker'
-			subtitle='Foundation step is ready. Client, API wiring, and PostgreSQL-backed server scaffold are in place.'
+			subtitle='Telegram auth, JWT session bootstrap, and protected routing are wired into the app shell.'
 		>
 			<section className={styles.grid}>
 				<article className={styles.card}>
@@ -23,6 +25,19 @@ const DashboardPage = () => {
 					<span className={styles.label}>API Base URL</span>
 					<h2>{env.API_URL}</h2>
 					<p>Configured through Vite env with a local fallback for development.</p>
+				</article>
+
+				<article className={styles.card}>
+					<span className={styles.label}>Session</span>
+					<h2>{user?.telegramId ?? 'Unknown user'}</h2>
+					<p>
+						User ID: <strong>{user?.id}</strong>
+						<br />
+						Access is now protected by the app bearer token.
+					</p>
+					<button type='button' className={styles.action} onClick={logout}>
+						Log Out
+					</button>
 				</article>
 
 				<article className={styles.card}>

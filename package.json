@@ -4,9 +4,9 @@
   "private": true,
   "description": "Rental Tracker MVP workspace",
   "scripts": {
-    "dev": "concurrently -k -n client,server \"npm run dev:client\" \"npm run dev:server\"",
-    "build": "npm run build:client && npm run build:server",
-    "lint": "npm run lint:client && npm run lint:server",
+    "dev": "concurrently -k -n client,server \"npm --prefix app/client run dev\" \"npm --prefix app/server run start:dev\"",
+    "build": "npm --prefix app/client run build && npm --prefix app/server run build",
+    "lint": "npm --prefix app/client run lint && npm --prefix app/server run lint",
     "format": "prettier --write \"app/client/**/*.{ts,tsx,scss,html,json}\" \"app/server/**/*.{ts,tsx,json}\" \"*.{json,md,yml,yaml}\"",
     "migration": "cd app/server && npm run migration",
     "db:up": "docker compose up -d postgres",

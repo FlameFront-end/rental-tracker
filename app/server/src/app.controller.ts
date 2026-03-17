@@ -6,14 +6,14 @@ import { AppService } from './app.service';
 @ApiTags('app')
 @Controller()
 export class AppController {
-	constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) {}
 
-	@Get()
-	@ApiOkResponse({
-		description:
-			'Returns API metadata and links to the main utility endpoints.',
-	})
-	getAppInfo() {
-		return this.appService.getAppInfo();
-	}
+  @Get()
+  @ApiOkResponse({
+    description:
+      'Returns API metadata and links to the main utility endpoints.',
+  })
+  getAppInfo() {
+    return this.appService.getAppInfo();
+  }
 }

@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { AppRoutes } from '@/app/components/AppRoutes'
+import { ProtectedRoute } from '@/app/components/ProtectedRoute'
+import AuthPage from '@/features/auth/pages/auth.page'
 import DashboardPage from '@/features/dashboard/pages/dashboard.page'
 import ErrorPage from '@/features/error/pages/error.page'
 import NotFoundPage from '@/features/not-found/pages/not-found.page'
@@ -16,8 +18,17 @@ export const router = createBrowserRouter([
 				element: <Navigate to={ROUTES.DASHBOARD} replace />
 			},
 			{
-				path: ROUTES.DASHBOARD,
-				element: <DashboardPage />
+				path: ROUTES.AUTH,
+				element: <AuthPage />
+			},
+			{
+				element: <ProtectedRoute />,
+				children: [
+					{
+						path: ROUTES.DASHBOARD,
+						element: <DashboardPage />
+					}
+				]
 			},
 			{
 				path: '*',

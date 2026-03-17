@@ -1,3 +1,4 @@
 export interface RequestUser {
-	userId: string;
+  userId: string;
+  telegramId?: string;
 }

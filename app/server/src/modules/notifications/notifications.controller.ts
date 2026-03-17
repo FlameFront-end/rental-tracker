@@ -7,13 +7,13 @@ import { NotificationsService } from './notifications.service';
 @ApiTags('notifications')
 @Controller('notifications')
 export class NotificationsController {
-	constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(private readonly notificationsService: NotificationsService) {}
 
-	@Get('status')
-	@ApiOkResponse({
-		type: NotificationsStatusDto,
-	})
-	getStatus() {
-		return this.notificationsService.getStatus();
-	}
+  @Get('status')
+  @ApiOkResponse({
+    type: NotificationsStatusDto,
+  })
+  getStatus() {
+    return this.notificationsService.getStatus();
+  }
 }

@@ -14,21 +14,21 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
-	imports: [
-		ConfigModule.forRoot({
-			isGlobal: true,
-			cache: true,
-			validate: validateEnv,
-		}),
-		TypeOrmModule.forRoot(buildDataSourceOptions()),
-		AuthModule,
-		UsersModule,
-		AssetsModule,
-		BookingsModule,
-		NotificationsModule,
-		HealthModule,
-	],
-	controllers: [AppController],
-	providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate: validateEnv,
+    }),
+    TypeOrmModule.forRoot(buildDataSourceOptions()),
+    AuthModule,
+    UsersModule,
+    AssetsModule,
+    BookingsModule,
+    NotificationsModule,
+    HealthModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

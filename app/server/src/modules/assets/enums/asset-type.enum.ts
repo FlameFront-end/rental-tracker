@@ -1,4 +1,4 @@
 export enum AssetType {
-	BIKE = 'bike',
-	VILLA = 'villa',
+  BIKE = 'bike',
+  VILLA = 'villa',
 }

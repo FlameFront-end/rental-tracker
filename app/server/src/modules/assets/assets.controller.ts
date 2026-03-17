@@ -1,27 +1,27 @@
 import {
-	Body,
-	Controller,
-	Delete,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	ParseUUIDPipe,
-	Patch,
-	Post,
-	Query,
-	UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
-	ApiCreatedResponse,
-	ApiNoContentResponse,
-	ApiOkResponse,
-	ApiTags,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 
-import { ApiCurrentUserHeader } from '../../common/decorators/api-current-user-header.decorator';
+import { ApiAccessTokenAuth } from '../../common/decorators/api-access-token-auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { RequestUserGuard } from '../../common/guards/request-user.guard';
+import { AccessTokenGuard } from '../../common/guards/access-token.guard';
 import type { RequestUser } from '../../common/interfaces/request-user.interface';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { ListAssetsQueryDto } from './dto/list-assets-query.dto';
@@ -30,62 +30,62 @@ import { AssetEntity } from './entities/asset.entity';
 import { AssetsService } from './assets.service';
 
 @ApiTags('assets')
-@ApiCurrentUserHeader()
-@UseGuards(RequestUserGuard)
+@ApiAccessTokenAuth()
+@UseGuards(AccessTokenGuard)
 @Controller('assets')
 export class AssetsController {
-	constructor(private readonly assetsService: AssetsService) {}
+  constructor(private readonly assetsService: AssetsService) {}
 
-	@Post()
-	@ApiCreatedResponse({
-		type: AssetEntity,
-	})
-	create(@CurrentUser() user: RequestUser, @Body() dto: CreateAssetDto) {
-		return this.assetsService.create(user.userId, dto);
-	}
+  @Post()
+  @ApiCreatedResponse({
+    type: AssetEntity,
+  })
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateAssetDto) {
+    return this.assetsService.create(user.userId, dto);
+  }
 
-	@Get()
-	@ApiOkResponse({
-		type: AssetEntity,
-		isArray: true,
-	})
-	findAll(
-		@CurrentUser() user: RequestUser,
-		@Query() query: ListAssetsQueryDto,
-	) {
-		return this.assetsService.findAll(user.userId, query);
-	}
+  @Get()
+  @ApiOkResponse({
+    type: AssetEntity,
+    isArray: true,
+  })
+  findAll(
+    @CurrentUser() user: RequestUser,
+    @Query() query: ListAssetsQueryDto,
+  ) {
+    return this.assetsService.findAll(user.userId, query);
+  }
 
-	@Get(':assetId')
-	@ApiOkResponse({
-		type: AssetEntity,
-	})
-	findById(
-		@CurrentUser() user: RequestUser,
-		@Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
-	) {
-		return this.assetsService.findOwnedAssetOrFail(user.userId, assetId);
-	}
+  @Get(':assetId')
+  @ApiOkResponse({
+    type: AssetEntity,
+  })
+  findById(
+    @CurrentUser() user: RequestUser,
+    @Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
+  ) {
+    return this.assetsService.findOwnedAssetOrFail(user.userId, assetId);
+  }
 
-	@Patch(':assetId')
-	@ApiOkResponse({
-		type: AssetEntity,
-	})
-	update(
-		@CurrentUser() user: RequestUser,
-		@Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
-		@Body() dto: UpdateAssetDto,
-	) {
-		return this.assetsService.update(user.userId, assetId, dto);
-	}
+  @Patch(':assetId')
+  @ApiOkResponse({
+    type: AssetEntity,
+  })
+  update(
+    @CurrentUser() user: RequestUser,
+    @Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
+    @Body() dto: UpdateAssetDto,
+  ) {
+    return this.assetsService.update(user.userId, assetId, dto);
+  }
 
-	@Delete(':assetId')
-	@HttpCode(HttpStatus.NO_CONTENT)
-	@ApiNoContentResponse()
-	async remove(
-		@CurrentUser() user: RequestUser,
-		@Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
-	) {
-		await this.assetsService.remove(user.userId, assetId);
-	}
+  @Delete(':assetId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  async remove(
+    @CurrentUser() user: RequestUser,
+    @Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
+  ) {
+    await this.assetsService.remove(user.userId, assetId);
+  }
 }

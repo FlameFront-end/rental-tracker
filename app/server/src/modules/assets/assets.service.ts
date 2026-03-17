@@ -1,7 +1,7 @@
 import {
-	ConflictException,
-	Injectable,
-	NotFoundException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -15,70 +15,70 @@ import { AssetEntity } from './entities/asset.entity';
 
 @Injectable()
 export class AssetsService {
-	constructor(
-		@InjectRepository(AssetEntity)
-		private readonly assetsRepository: Repository<AssetEntity>,
-		private readonly usersService: UsersService,
-	) {}
+  constructor(
+    @InjectRepository(AssetEntity)
+    private readonly assetsRepository: Repository<AssetEntity>,
+    private readonly usersService: UsersService,
+  ) {}
 
-	async create(userId: string, dto: CreateAssetDto) {
-		await this.usersService.findByIdOrFail(userId);
+  async create(userId: string, dto: CreateAssetDto) {
+    await this.usersService.findByIdOrFail(userId);
 
-		const asset = this.assetsRepository.create({
-			...dto,
-			userId,
-		});
+    const asset = this.assetsRepository.create({
+      ...dto,
+      userId,
+    });
 
-		return this.assetsRepository.save(asset);
-	}
+    return this.assetsRepository.save(asset);
+  }
 
-	findAll(userId: string, query: ListAssetsQueryDto) {
-		return this.assetsRepository.find({
-			where: {
-				userId,
-				...(query.type ? { type: query.type } : {}),
-			},
-			order: {
-				createdAt: 'DESC',
-			},
-		});
-	}
+  findAll(userId: string, query: ListAssetsQueryDto) {
+    return this.assetsRepository.find({
+      where: {
+        userId,
+        ...(query.type ? { type: query.type } : {}),
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
 
-	async findOwnedAssetOrFail(userId: string, assetId: string) {
-		const asset = await this.assetsRepository.findOne({
-			where: {
-				id: assetId,
-				userId,
-			},
-		});
+  async findOwnedAssetOrFail(userId: string, assetId: string) {
+    const asset = await this.assetsRepository.findOne({
+      where: {
+        id: assetId,
+        userId,
+      },
+    });
 
-		if (!asset) {
-			throw new NotFoundException(`Asset ${assetId} was not found.`);
-		}
+    if (!asset) {
+      throw new NotFoundException(`Asset ${assetId} was not found.`);
+    }
 
-		return asset;
-	}
+    return asset;
+  }
 
-	async update(userId: string, assetId: string, dto: UpdateAssetDto) {
-		const asset = await this.findOwnedAssetOrFail(userId, assetId);
-		const nextAsset = this.assetsRepository.merge(asset, dto);
+  async update(userId: string, assetId: string, dto: UpdateAssetDto) {
+    const asset = await this.findOwnedAssetOrFail(userId, assetId);
+    const nextAsset = this.assetsRepository.merge(asset, dto);
 
-		return this.assetsRepository.save(nextAsset);
-	}
+    return this.assetsRepository.save(nextAsset);
+  }
 
-	async remove(userId: string, assetId: string) {
-		const asset = await this.findOwnedAssetOrFail(userId, assetId);
+  async remove(userId: string, assetId: string) {
+    const asset = await this.findOwnedAssetOrFail(userId, assetId);
 
-		try {
-			await this.assetsRepository.remove(asset);
-		} catch (error) {
-			if (isPostgresError(error, '23503', 'fk_bookings_asset_id')) {
-				throw new ConflictException(
-					'Asset cannot be removed because it still has bookings.',
-				);
-			}
+    try {
+      await this.assetsRepository.remove(asset);
+    } catch (error) {
+      if (isPostgresError(error, '23503', 'fk_bookings_asset_id')) {
+        throw new ConflictException(
+          'Asset cannot be removed because it still has bookings.',
+        );
+      }
 
-			throw error;
-		}
-	}
+      throw error;
+    }
+  }
 }

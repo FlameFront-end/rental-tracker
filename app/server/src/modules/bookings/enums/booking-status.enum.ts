@@ -1,4 +1,4 @@
 export enum BookingStatus {
-	PAID = 'paid',
-	PENDING = 'pending',
+  PAID = 'paid',
+  PENDING = 'pending',
 }
