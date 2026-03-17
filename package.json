@@ -1,0 +1,28 @@
+{
+  "name": "rental-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rental Tracker MVP workspace",
+  "scripts": {
+    "dev": "concurrently -k -n client,server \"npm run dev:client\" \"npm run dev:server\"",
+    "build": "npm run build:client && npm run build:server",
+    "lint": "npm run lint:client && npm run lint:server",
+    "format": "prettier --write \"app/client/**/*.{ts,tsx,scss,html,json}\" \"app/server/**/*.{ts,tsx,json}\" \"*.{json,md,yml,yaml}\"",
+    "migration": "cd app/server && npm run migration",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres"
+  },
+  "keywords": [
+    "telegram-mini-app",
+    "react",
+    "nest",
+    "postgres"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prettier": "^3.8.1"
+  }
+}
