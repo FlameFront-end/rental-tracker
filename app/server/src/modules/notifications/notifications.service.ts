@@ -1,13 +1,405 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
+import { Repository } from 'typeorm';
 
+import {
+  getCurrentDateOnly,
+  addDaysToDateOnly,
+} from '../../common/utils/date.util';
+import { BookingEntity } from '../bookings/entities/booking.entity';
+import { DispatchNotificationsDto } from './dto/dispatch-notifications.dto';
+import { NotificationsDispatchResultDto } from './dto/notifications-dispatch-result.dto';
 import { NotificationsStatusDto } from './dto/notifications-status.dto';
+import { NotificationDeliveryEntity } from './entities/notification-delivery.entity';
+import { NotificationDeliveryStatus } from './enums/notification-delivery-status.enum';
+import { NotificationReminderType } from './enums/notification-reminder-type.enum';
+
+type DueReminderBooking = {
+  assetName: string;
+  bookingId: string;
+  clientName: string;
+  endDate: string;
+  telegramChatId: string;
+  userId: string;
+};
+
+type RawDueReminderBooking = Omit<DueReminderBooking, 'endDate'> & {
+  endDate: Date | string;
+};
+
+const TODAY_CRON = '0 * * * *';
+const TOMORROW_CRON = '10 * * * *';
 
 @Injectable()
 export class NotificationsService {
-  getStatus(): NotificationsStatusDto {
+  private readonly logger = new Logger(NotificationsService.name);
+
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRepository(BookingEntity)
+    private readonly bookingsRepository: Repository<BookingEntity>,
+    @InjectRepository(NotificationDeliveryEntity)
+    private readonly deliveriesRepository: Repository<NotificationDeliveryEntity>,
+  ) {}
+
+  async getStatus(): Promise<NotificationsStatusDto> {
+    const [sentCount, failedCount] = await Promise.all([
+      this.deliveriesRepository.count({
+        where: {
+          status: NotificationDeliveryStatus.SENT,
+        },
+      }),
+      this.deliveriesRepository.count({
+        where: {
+          status: NotificationDeliveryStatus.FAILED,
+        },
+      }),
+    ]);
+    const botConfigured = this.isBotConfigured();
+
     return {
-      status: 'todo',
-      message: 'Telegram reminder jobs will be implemented in a later step.',
+      status: botConfigured ? 'ready' : 'disabled',
+      message: botConfigured
+        ? 'Telegram reminders are configured and scheduled.'
+        : 'Telegram reminders are disabled because TELEGRAM_BOT_TOKEN is empty.',
+      botConfigured,
+      schedulerEnabled: botConfigured,
+      sentCount,
+      failedCount,
     };
+  }
+
+  @Cron(TODAY_CRON, {
+    name: 'notifications-today',
+  })
+  async dispatchTodayCron() {
+    await this.dispatchReminders(NotificationReminderType.TODAY);
+  }
+
+  @Cron(TOMORROW_CRON, {
+    name: 'notifications-tomorrow',
+  })
+  async dispatchTomorrowCron() {
+    await this.dispatchReminders(NotificationReminderType.TOMORROW);
+  }
+
+  async runManualDispatch(
+    userId: string,
+    dto: DispatchNotificationsDto,
+  ): Promise<NotificationsDispatchResultDto[]> {
+    const reminderTypes =
+      dto.kind === 'all'
+        ? [NotificationReminderType.TODAY, NotificationReminderType.TOMORROW]
+        : [dto.kind];
+
+    const results: NotificationsDispatchResultDto[] = [];
+
+    for (const reminderType of reminderTypes) {
+      results.push(
+        await this.dispatchReminders(reminderType, {
+          dryRun: dto.dryRun,
+          userId,
+        }),
+      );
+    }
+
+    return results;
+  }
+
+  private async dispatchReminders(
+    reminderType: NotificationReminderType,
+    options?: {
+      dryRun?: boolean;
+      userId?: string;
+    },
+  ): Promise<NotificationsDispatchResultDto> {
+    const targetDate = this.getTargetDate(reminderType);
+    const dueBookings = await this.findDueBookings(targetDate, options?.userId);
+    const result: NotificationsDispatchResultDto = {
+      reminderType,
+      targetDate,
+      dryRun: options?.dryRun ?? false,
+      dueCount: dueBookings.length,
+      sentCount: 0,
+      skippedCount: 0,
+      failedCount: 0,
+      items: [],
+    };
+
+    if (!this.isBotConfigured() && !options?.dryRun) {
+      this.logger.warn(
+        `Skipping ${reminderType} reminders because TELEGRAM_BOT_TOKEN is not configured.`,
+      );
+
+      result.skippedCount = dueBookings.length;
+      result.items = dueBookings.map((booking) => ({
+        bookingId: booking.bookingId,
+        userId: booking.userId,
+        bikeName: booking.assetName,
+        clientName: booking.clientName,
+        endDate: booking.endDate,
+        outcome: 'skipped',
+        message: this.buildReminderMessage(booking, reminderType),
+        error: 'TELEGRAM_BOT_TOKEN is not configured.',
+      }));
+
+      return result;
+    }
+
+    for (const booking of dueBookings) {
+      const message = this.buildReminderMessage(booking, reminderType);
+
+      if (options?.dryRun) {
+        result.sentCount += 1;
+        result.items.push({
+          bookingId: booking.bookingId,
+          userId: booking.userId,
+          bikeName: booking.assetName,
+          clientName: booking.clientName,
+          endDate: booking.endDate,
+          outcome: 'dry-run',
+          message,
+          error: null,
+        });
+
+        continue;
+      }
+
+      const claimedDelivery = await this.claimDelivery(booking, reminderType);
+
+      if (!claimedDelivery) {
+        result.skippedCount += 1;
+        result.items.push({
+          bookingId: booking.bookingId,
+          userId: booking.userId,
+          bikeName: booking.assetName,
+          clientName: booking.clientName,
+          endDate: booking.endDate,
+          outcome: 'skipped',
+          message,
+          error:
+            'A sent reminder already exists for this booking and reminder type.',
+        });
+
+        continue;
+      }
+
+      try {
+        await this.sendTelegramMessage(booking.telegramChatId, message);
+        await this.deliveriesRepository.update(claimedDelivery.id, {
+          status: NotificationDeliveryStatus.SENT,
+          sentAt: new Date(),
+          lastError: null,
+        });
+
+        result.sentCount += 1;
+        result.items.push({
+          bookingId: booking.bookingId,
+          userId: booking.userId,
+          bikeName: booking.assetName,
+          clientName: booking.clientName,
+          endDate: booking.endDate,
+          outcome: 'sent',
+          message,
+          error: null,
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown Telegram error.';
+
+        await this.deliveriesRepository.update(claimedDelivery.id, {
+          status: NotificationDeliveryStatus.FAILED,
+          lastError: errorMessage,
+        });
+
+        result.failedCount += 1;
+        result.items.push({
+          bookingId: booking.bookingId,
+          userId: booking.userId,
+          bikeName: booking.assetName,
+          clientName: booking.clientName,
+          endDate: booking.endDate,
+          outcome: 'failed',
+          message,
+          error: errorMessage,
+        });
+
+        this.logger.error(
+          `Failed to send ${reminderType} reminder for booking ${booking.bookingId}: ${errorMessage}`,
+        );
+      }
+    }
+
+    return result;
+  }
+
+  private async findDueBookings(targetDate: string, userId?: string) {
+    const qb = this.bookingsRepository
+      .createQueryBuilder('booking')
+      .innerJoin('booking.asset', 'asset')
+      .innerJoin('asset.user', 'user')
+      .select('booking.id', 'bookingId')
+      .addSelect('booking.clientName', 'clientName')
+      .addSelect('booking.endDate', 'endDate')
+      .addSelect('asset.name', 'assetName')
+      .addSelect('user.id', 'userId')
+      .addSelect('user.telegramId', 'telegramChatId')
+      .where('booking.endDate = :targetDate', { targetDate })
+      .orderBy('booking.createdAt', 'ASC');
+
+    if (userId) {
+      qb.andWhere('user.id = :userId', {
+        userId,
+      });
+    }
+
+    const rows = await qb.getRawMany<RawDueReminderBooking>();
+
+    return rows.map((row) => ({
+      ...row,
+      endDate: this.formatDateOnlyValue(row.endDate),
+    }));
+  }
+
+  private async claimDelivery(
+    booking: DueReminderBooking,
+    reminderType: NotificationReminderType,
+  ) {
+    const dedupeKey = this.buildDedupeKey(
+      booking.bookingId,
+      reminderType,
+      booking.endDate,
+    );
+    const existingDelivery = await this.deliveriesRepository.findOne({
+      where: {
+        dedupeKey,
+      },
+    });
+
+    if (!existingDelivery) {
+      try {
+        return await this.deliveriesRepository.save(
+          this.deliveriesRepository.create({
+            dedupeKey,
+            userId: booking.userId,
+            bookingId: booking.bookingId,
+            telegramChatId: booking.telegramChatId,
+            reminderType,
+            targetDate: booking.endDate,
+            status: NotificationDeliveryStatus.PROCESSING,
+            attemptCount: 1,
+            lastError: null,
+            sentAt: null,
+          }),
+        );
+      } catch (error) {
+        const duplicateDelivery = await this.deliveriesRepository.findOne({
+          where: {
+            dedupeKey,
+          },
+        });
+
+        if (!duplicateDelivery) {
+          throw error;
+        }
+
+        if (duplicateDelivery.status === NotificationDeliveryStatus.SENT) {
+          return null;
+        }
+
+        duplicateDelivery.status = NotificationDeliveryStatus.PROCESSING;
+        duplicateDelivery.attemptCount += 1;
+        duplicateDelivery.lastError = null;
+        duplicateDelivery.telegramChatId = booking.telegramChatId;
+
+        return this.deliveriesRepository.save(duplicateDelivery);
+      }
+    }
+
+    if (existingDelivery.status === NotificationDeliveryStatus.SENT) {
+      return null;
+    }
+
+    existingDelivery.status = NotificationDeliveryStatus.PROCESSING;
+    existingDelivery.attemptCount += 1;
+    existingDelivery.lastError = null;
+    existingDelivery.telegramChatId = booking.telegramChatId;
+
+    return this.deliveriesRepository.save(existingDelivery);
+  }
+
+  private buildDedupeKey(
+    bookingId: string,
+    reminderType: NotificationReminderType,
+    targetDate: string,
+  ) {
+    return `${bookingId}:${reminderType}:${targetDate}`;
+  }
+
+  private buildReminderMessage(
+    booking: DueReminderBooking,
+    reminderType: NotificationReminderType,
+  ) {
+    const timingLabel =
+      reminderType === NotificationReminderType.TODAY ? 'today' : 'tomorrow';
+
+    return [
+      `Rental reminder: booking ends ${timingLabel}.`,
+      `Bike: ${booking.assetName}`,
+      `Client: ${booking.clientName}`,
+      `End date: ${booking.endDate}`,
+    ].join('\n');
+  }
+
+  private formatDateOnlyValue(value: Date | string) {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private getTargetDate(reminderType: NotificationReminderType) {
+    const today = getCurrentDateOnly();
+
+    return reminderType === NotificationReminderType.TODAY
+      ? today
+      : addDaysToDateOnly(today, 1);
+  }
+
+  private isBotConfigured() {
+    return Boolean(
+      this.configService.get<string>('TELEGRAM_BOT_TOKEN', '').trim(),
+    );
+  }
+
+  private async sendTelegramMessage(chatId: string, text: string) {
+    const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN', '');
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+        }),
+      },
+    );
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        `Telegram API returned ${response.status}: ${responseText}`,
+      );
+    }
   }
 }

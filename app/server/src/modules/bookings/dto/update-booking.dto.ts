@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MaxLength,
   Min,
@@ -13,6 +14,13 @@ import {
 import { BookingStatus } from '../enums/booking-status.enum';
 
 export class UpdateBookingDto {
+  @ApiPropertyOptional({
+    format: 'uuid',
+  })
+  @IsOptional()
+  @IsUUID('4')
+  assetId?: string;
+
   @ApiPropertyOptional({
     example: 'John Smith',
     maxLength: 120,

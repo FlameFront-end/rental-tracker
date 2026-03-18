@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
-import { useAuthSession } from '@/app/model/use-auth-session'
+import { useAuthSession } from '@/app/session/use-auth-session'
 import { ROUTES } from '@/shared/model'
 import { FullScreenLoader } from '@/shared/widgets'
 

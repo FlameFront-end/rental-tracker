@@ -2,14 +2,16 @@ import { useState } from 'react'
 
 import { Navigate } from 'react-router-dom'
 
-import { useAuthSession } from '@/app/model/use-auth-session'
+import { useI18n } from '@/app/i18n/use-i18n'
+import { useAuthSession } from '@/app/session/use-auth-session'
 import AuthStateCard from '@/features/auth/components/AuthStateCard'
-import { ROUTES, env } from '@/shared/model'
+import { ROUTES } from '@/shared/model'
 import { Layout } from '@/shared/widgets'
 
 import styles from './auth.module.scss'
 
 const AuthPage = () => {
+	const { t } = useI18n()
 	const {
 		canUseDevelopmentLogin,
 		error,
@@ -46,32 +48,27 @@ const AuthPage = () => {
 
 	return (
 		<Layout
-			title='Authorization'
-			subtitle='The app signs users in through Telegram Mini Apps and falls back to a development login locally.'
+			title={t('auth.title')}
+			subtitle={t('auth.subtitle')}
 		>
 			<section className={styles.grid}>
 				<AuthStateCard
-					eyebrow='Session'
+					eyebrow={t('auth.startEyebrow')}
 					title={
 						isTelegramEnvironment
-							? 'Signing in with Telegram Mini App'
-							: 'Running outside Telegram'
+							? t('auth.telegramTitle')
+							: t('auth.localTitle')
 					}
 					description={
 						<>
-							<p>
-								Current API: <strong>{env.API_URL}</strong>
-							</p>
 							{error ? <p className={styles.error}>{error}</p> : null}
 							{isTelegramEnvironment ? (
 								<p>
-									The app found Telegram init data and can retry the server-side
-									login flow if needed.
+									{t('auth.telegramDescription')}
 								</p>
 							) : (
 								<p>
-									Local development uses a dev-only auth endpoint and a synthetic
-									Telegram id.
+									{t('auth.localDescription')}
 								</p>
 							)}
 						</>
@@ -85,7 +82,7 @@ const AuthPage = () => {
 									onClick={handleTelegramRetry}
 									disabled={isSubmitting || status === 'bootstrapping'}
 								>
-									Retry Telegram Login
+									{t('auth.enterWorkspace')}
 								</button>
 							) : null}
 							{canUseDevelopmentLogin ? (
@@ -95,7 +92,7 @@ const AuthPage = () => {
 									onClick={handleDevLogin}
 									disabled={isSubmitting || status === 'bootstrapping'}
 								>
-									Continue in Dev Mode
+									{t('auth.continueDevMode')}
 								</button>
 							) : null}
 						</>
@@ -103,18 +100,15 @@ const AuthPage = () => {
 				/>
 
 				<AuthStateCard
-					eyebrow='How It Works'
-					title='Auth bootstrap'
+					eyebrow={t('auth.flowEyebrow')}
+					title={t('auth.nextTitle')}
 					description={
 						<>
-							<span className={styles.badge}>automatic</span>
+							<span className={styles.badge}>{t('auth.flowBadge')}</span>
 							<ul className={styles.list}>
-								<li>If a valid app token exists, the client restores the session.</li>
-								<li>If Telegram init data is available, the client logs in automatically.</li>
-								<li>
-									If the app runs locally outside Telegram, it can fall back to dev
-									login with <code>{env.DEV_TELEGRAM_ID || 'no dev id configured'}</code>.
-								</li>
+								<li>{t('auth.flowPoint1')}</li>
+								<li>{t('auth.flowPoint2')}</li>
+								<li>{t('auth.flowPoint3')}</li>
 							</ul>
 						</>
 					}

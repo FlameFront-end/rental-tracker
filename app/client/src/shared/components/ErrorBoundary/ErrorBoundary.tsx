@@ -1,9 +1,8 @@
-import type { ErrorInfo, ReactNode } from 'react'
+import type { ContextType, ErrorInfo, ReactNode } from 'react'
 import { Component } from 'react'
 
+import { I18nContext } from '@/app/i18n/i18n.context'
 import { FullErrorScreen } from '@/shared/widgets'
-
-import styles from './ErrorBoundary.module.scss'
 
 interface ErrorBoundaryProps {
 	children: ReactNode
@@ -11,15 +10,24 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
 	hasError: boolean
+	message?: string
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+	public static contextType = I18nContext
+
+	public declare context: ContextType<typeof I18nContext>
+
 	public state: ErrorBoundaryState = {
-		hasError: false
+		hasError: false,
+		message: undefined
 	}
 
-	public static getDerivedStateFromError() {
-		return { hasError: true }
+	public static getDerivedStateFromError(error: Error) {
+		return {
+			hasError: true,
+			message: error.message
+		}
 	}
 
 	public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -28,13 +36,23 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
 	public render() {
 		if (this.state.hasError) {
+			const t = this.context?.t ?? ((key: string) => key)
+
 			return (
-				<div className={styles.fallback}>
-					<FullErrorScreen
-						title='Unexpected Error'
-						message='The application crashed before the page could finish rendering.'
-					/>
-				</div>
+				<FullErrorScreen
+					tone='error'
+					eyebrow={t('error.appEyebrow')}
+					statusCode='500'
+					title={t('error.appTitle')}
+					message={t('error.appMessage')}
+					detail={import.meta.env.DEV ? this.state.message : undefined}
+					actions={[
+						{
+							label: t('common.reloadApp'),
+							onClick: () => window.location.reload()
+						}
+					]}
+				/>
 			)
 		}
 

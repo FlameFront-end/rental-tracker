@@ -6,9 +6,6 @@ export class InitialSchema1710878400000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner) {
     await queryRunner.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto"');
     await queryRunner.query(
-      "CREATE TYPE asset_type_enum AS ENUM ('bike', 'villa')",
-    );
-    await queryRunner.query(
       "CREATE TYPE booking_status_enum AS ENUM ('paid', 'pending')",
     );
     await queryRunner.query(`
@@ -24,7 +21,6 @@ export class InitialSchema1710878400000 implements MigrationInterface {
 				id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 				user_id uuid NOT NULL,
 				name varchar(120) NOT NULL,
-				type asset_type_enum NOT NULL,
 				created_at timestamptz NOT NULL DEFAULT now(),
 				updated_at timestamptz NOT NULL DEFAULT now(),
 				CONSTRAINT fk_assets_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -49,9 +45,6 @@ export class InitialSchema1710878400000 implements MigrationInterface {
       'CREATE INDEX idx_assets_user_id ON assets (user_id)',
     );
     await queryRunner.query(
-      'CREATE INDEX idx_assets_user_type ON assets (user_id, type)',
-    );
-    await queryRunner.query(
       'CREATE INDEX idx_bookings_asset_id ON bookings (asset_id)',
     );
     await queryRunner.query(
@@ -70,12 +63,10 @@ export class InitialSchema1710878400000 implements MigrationInterface {
     await queryRunner.query('DROP INDEX IF EXISTS idx_bookings_status');
     await queryRunner.query('DROP INDEX IF EXISTS idx_bookings_end_date');
     await queryRunner.query('DROP INDEX IF EXISTS idx_bookings_asset_id');
-    await queryRunner.query('DROP INDEX IF EXISTS idx_assets_user_type');
     await queryRunner.query('DROP INDEX IF EXISTS idx_assets_user_id');
     await queryRunner.query('DROP TABLE IF EXISTS bookings');
     await queryRunner.query('DROP TABLE IF EXISTS assets');
     await queryRunner.query('DROP TABLE IF EXISTS users');
     await queryRunner.query('DROP TYPE IF EXISTS booking_status_enum');
-    await queryRunner.query('DROP TYPE IF EXISTS asset_type_enum');
   }
 }

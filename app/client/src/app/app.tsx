@@ -2,8 +2,8 @@ import { RouterProvider } from 'react-router-dom'
 
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary'
 
-import { router } from './model/router'
-import { Providers } from './model/providers'
+import { Providers } from './providers'
+import { router } from './router/router'
 
 export const App = () => {
 	return (

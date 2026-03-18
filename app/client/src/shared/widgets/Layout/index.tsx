@@ -12,9 +12,11 @@ interface LayoutProps extends PropsWithChildren {
 const Layout = ({ title, subtitle, children }: LayoutProps) => {
 	return (
 		<div className={styles.shell}>
+			<div className={styles.glowPrimary} />
+			<div className={styles.glowSecondary} />
 			<div className={styles.container}>
 				<Header title={title} subtitle={subtitle} />
-				<main>{children}</main>
+				<main className={styles.content}>{children}</main>
 			</div>
 		</div>
 	)

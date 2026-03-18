@@ -12,7 +12,6 @@ import {
 
 import { BookingEntity } from '../../bookings/entities/booking.entity';
 import { UserEntity } from '../../users/entities/user.entity';
-import { AssetType } from '../enums/asset-type.enum';
 
 @Entity({ name: 'assets' })
 export class AssetEntity {
@@ -40,16 +39,6 @@ export class AssetEntity {
     length: 120,
   })
   name!: string;
-
-  @ApiProperty({
-    enum: AssetType,
-    enumName: 'AssetType',
-  })
-  @Column({
-    type: 'enum',
-    enum: AssetType,
-  })
-  type!: AssetType;
 
   @ApiProperty()
   @CreateDateColumn({

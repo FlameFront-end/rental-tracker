@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
@@ -10,6 +11,7 @@ import { HealthModule } from './health/health.module';
 import { AssetsModule } from './modules/assets/assets.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -20,11 +22,13 @@ import { UsersModule } from './modules/users/users.module';
       cache: true,
       validate: validateEnv,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot(buildDataSourceOptions()),
     AuthModule,
     UsersModule,
     AssetsModule,
     BookingsModule,
+    DashboardModule,
     NotificationsModule,
     HealthModule,
   ],

@@ -1,0 +1,90 @@
+.card {
+	display: grid;
+	gap: 1rem;
+	padding: 1.1rem;
+	border: 1px solid var(--color-border);
+	border-radius: 1.35rem;
+	background: var(--color-surface-muted);
+}
+
+.header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.title {
+	font-size: 1.1rem;
+	font-weight: 800;
+}
+
+.meta {
+	margin-top: 0.35rem;
+	color: var(--color-text-muted);
+	line-height: 1.5;
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 2rem;
+	padding: 0.4rem 0.7rem;
+	border-radius: 999px;
+	background: var(--color-success-soft);
+	color: var(--color-success-text);
+	font-size: 0.76rem;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.65rem;
+}
+
+.iconAction {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.6rem;
+	height: 2.6rem;
+	padding: 0;
+	border: 1px solid var(--color-border);
+	border-radius: 0.9rem;
+	background: color-mix(in srgb, var(--color-surface-strong) 75%, transparent);
+	color: var(--color-text-muted);
+	cursor: pointer;
+	transition:
+		transform 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease;
+}
+
+.iconAction:hover:not(:disabled) {
+	transform: translateY(-1px);
+	border-color: var(--color-accent);
+	color: var(--color-text);
+}
+
+.iconAction:disabled {
+	opacity: 0.55;
+	cursor: wait;
+}
+
+.iconActionActive {
+	border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+	color: var(--color-accent);
+}
+
+.iconAction svg {
+	width: 1.05rem;
+	height: 1.05rem;
+}
+
+.deleteAction {
+	color: var(--color-danger-text);
+}

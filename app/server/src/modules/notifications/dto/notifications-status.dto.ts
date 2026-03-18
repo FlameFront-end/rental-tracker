@@ -2,12 +2,32 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class NotificationsStatusDto {
   @ApiProperty({
-    example: 'todo',
+    example: 'ready',
   })
   status!: string;
 
   @ApiProperty({
-    example: 'Telegram reminder jobs will be implemented in a later step.',
+    example: 'Telegram reminders are configured and scheduled.',
   })
   message!: string;
+
+  @ApiProperty({
+    example: true,
+  })
+  botConfigured!: boolean;
+
+  @ApiProperty({
+    example: true,
+  })
+  schedulerEnabled!: boolean;
+
+  @ApiProperty({
+    example: 12,
+  })
+  sentCount!: number;
+
+  @ApiProperty({
+    example: 1,
+  })
+  failedCount!: number;
 }

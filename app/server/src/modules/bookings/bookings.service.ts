@@ -94,6 +94,12 @@ export class BookingsService {
 
   async update(userId: string, bookingId: string, dto: UpdateBookingDto) {
     const booking = await this.findOwnedBookingOrFail(userId, bookingId);
+    const nextAssetId = dto.assetId ?? booking.assetId;
+
+    if (nextAssetId !== booking.assetId) {
+      await this.assetsService.findOwnedAssetOrFail(userId, nextAssetId);
+    }
+
     const startDate = normalizeDateOnly(
       dto.startDate ?? booking.startDate,
       'startDate',
@@ -104,9 +110,10 @@ export class BookingsService {
     );
 
     assertDateRange(startDate, endDate);
-    await this.ensureNoOverlap(booking.assetId, startDate, endDate, booking.id);
+    await this.ensureNoOverlap(nextAssetId, startDate, endDate, booking.id);
 
     const nextBooking = this.bookingsRepository.merge(booking, dto, {
+      assetId: nextAssetId,
       startDate,
       endDate,
     });

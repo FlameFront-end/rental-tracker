@@ -1,8 +1,52 @@
 :root {
-	--color-background: #f8fafc;
-	--color-surface: rgba(255, 255, 255, 0.88);
-	--color-border: rgba(148, 163, 184, 0.3);
-	--color-text: #0f172a;
-	--color-text-muted: #475569;
-	--color-accent: #0f766e;
+	--font-body: 'Manrope', 'Segoe UI', sans-serif;
+	--font-display: 'Space Grotesk', 'Segoe UI', sans-serif;
+	--shadow-soft: 0 20px 60px rgba(2, 6, 23, 0.18);
+	--shadow-card: 0 18px 40px rgba(2, 6, 23, 0.22);
+	--page-max-width: 1180px;
+}
+
+:root,
+:root[data-theme='dark'] {
+	--color-background: #07111f;
+	--color-background-elevated: #0d1b30;
+	--color-surface: rgba(12, 24, 43, 0.88);
+	--color-surface-strong: rgba(17, 33, 57, 0.96);
+	--color-surface-muted: rgba(128, 151, 188, 0.12);
+	--color-border: rgba(134, 160, 201, 0.16);
+	--color-border-strong: rgba(134, 160, 201, 0.28);
+	--color-text: #f3f7fb;
+	--color-text-muted: #9cb0cb;
+	--color-accent: #46d4c6;
+	--color-accent-2: #ff9d57;
+	--color-accent-soft: rgba(70, 212, 198, 0.16);
+	--color-success-soft: rgba(66, 211, 146, 0.16);
+	--color-success-text: #86efac;
+	--color-warning-soft: rgba(255, 157, 87, 0.18);
+	--color-warning-text: #ffd0ac;
+	--color-danger-soft: rgba(255, 105, 105, 0.15);
+	--color-danger-text: #ffb4b4;
+}
+
+:root[data-theme='light'] {
+	--color-background: #f4efe6;
+	--color-background-elevated: #fff8ed;
+	--color-surface: rgba(255, 250, 243, 0.82);
+	--color-surface-strong: rgba(255, 252, 247, 0.94);
+	--color-surface-muted: rgba(59, 77, 102, 0.08);
+	--color-border: rgba(93, 108, 129, 0.16);
+	--color-border-strong: rgba(93, 108, 129, 0.24);
+	--color-text: #172033;
+	--color-text-muted: #5b6679;
+	--color-accent: #0d9488;
+	--color-accent-2: #f97316;
+	--color-accent-soft: rgba(13, 148, 136, 0.12);
+	--color-success-soft: rgba(22, 163, 74, 0.12);
+	--color-success-text: #166534;
+	--color-warning-soft: rgba(249, 115, 22, 0.12);
+	--color-warning-text: #9a3412;
+	--color-danger-soft: rgba(220, 38, 38, 0.1);
+	--color-danger-text: #991b1b;
+	--shadow-soft: 0 18px 45px rgba(120, 100, 74, 0.12);
+	--shadow-card: 0 16px 34px rgba(120, 100, 74, 0.16);
 }

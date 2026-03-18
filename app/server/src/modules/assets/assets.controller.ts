@@ -9,7 +9,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -24,7 +23,6 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AccessTokenGuard } from '../../common/guards/access-token.guard';
 import type { RequestUser } from '../../common/interfaces/request-user.interface';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { ListAssetsQueryDto } from './dto/list-assets-query.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AssetEntity } from './entities/asset.entity';
 import { AssetsService } from './assets.service';
@@ -49,11 +47,8 @@ export class AssetsController {
     type: AssetEntity,
     isArray: true,
   })
-  findAll(
-    @CurrentUser() user: RequestUser,
-    @Query() query: ListAssetsQueryDto,
-  ) {
-    return this.assetsService.findAll(user.userId, query);
+  findAll(@CurrentUser() user: RequestUser) {
+    return this.assetsService.findAll(user.userId);
   }
 
   @Get(':assetId')

@@ -4,12 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 
 import { isPostgresError } from '../../common/utils/database-error.util';
+import { getCurrentDateOnly } from '../../common/utils/date.util';
+import { BookingEntity } from '../bookings/entities/booking.entity';
 import { UsersService } from '../users/users.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { ListAssetsQueryDto } from './dto/list-assets-query.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AssetEntity } from './entities/asset.entity';
 
@@ -18,6 +19,8 @@ export class AssetsService {
   constructor(
     @InjectRepository(AssetEntity)
     private readonly assetsRepository: Repository<AssetEntity>,
+    @InjectRepository(BookingEntity)
+    private readonly bookingsRepository: Repository<BookingEntity>,
     private readonly usersService: UsersService,
   ) {}
 
@@ -25,18 +28,17 @@ export class AssetsService {
     await this.usersService.findByIdOrFail(userId);
 
     const asset = this.assetsRepository.create({
-      ...dto,
+      name: dto.name,
       userId,
     });
 
     return this.assetsRepository.save(asset);
   }
 
-  findAll(userId: string, query: ListAssetsQueryDto) {
+  findAll(userId: string) {
     return this.assetsRepository.find({
       where: {
         userId,
-        ...(query.type ? { type: query.type } : {}),
       },
       order: {
         createdAt: 'DESC',
@@ -68,13 +70,26 @@ export class AssetsService {
 
   async remove(userId: string, assetId: string) {
     const asset = await this.findOwnedAssetOrFail(userId, assetId);
+    const today = getCurrentDateOnly();
+    const activeOrFutureBookings = await this.bookingsRepository.count({
+      where: {
+        assetId: asset.id,
+        endDate: MoreThanOrEqual(today),
+      },
+    });
+
+    if (activeOrFutureBookings > 0) {
+      throw new ConflictException(
+        'Asset cannot be removed because it has active or future bookings.',
+      );
+    }
 
     try {
       await this.assetsRepository.remove(asset);
     } catch (error) {
       if (isPostgresError(error, '23503', 'fk_bookings_asset_id')) {
         throw new ConflictException(
-          'Asset cannot be removed because it still has bookings.',
+          'Asset cannot be removed because booking history still exists.',
         );
       }
 

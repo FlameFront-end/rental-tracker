@@ -4,15 +4,15 @@ coverage/
 .tmp/
 .DS_Store
 
-client/node_modules/
-client/dist/
-client/.env
+app/client/node_modules/
+app/client/dist/
+app/client/.env
 
-server/node_modules/
-server/dist/
-server/.env
+app/server/node_modules/
+app/server/dist/
+app/server/.env
 
 .env
-steps
-пример-фронт
+steps/
+пример-фронт/
 .vscode/

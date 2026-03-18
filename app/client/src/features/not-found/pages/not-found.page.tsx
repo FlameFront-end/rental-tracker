@@ -1,19 +1,28 @@
-import { Link } from 'react-router-dom'
-
+import { useI18n } from '@/app/i18n/use-i18n'
 import { ROUTES } from '@/shared/model/routes'
 import { FullErrorScreen } from '@/shared/widgets'
 
-import styles from './not-found.module.scss'
-
 const NotFoundPage = () => {
+	const { t } = useI18n()
+
 	return (
 		<FullErrorScreen
-			title='Page Not Found'
-			message={
-				<span className={styles.message}>
-					The requested route does not exist. Go back to the <Link to={ROUTES.DASHBOARD}>dashboard</Link>.
-				</span>
-			}
+			tone='not-found'
+			eyebrow={t('error.notFoundEyebrow')}
+			statusCode='404'
+			title={t('error.notFoundTitle')}
+			message={t('error.notFoundMessage')}
+			actions={[
+				{
+					label: t('common.goToDashboard'),
+					onClick: () => window.location.assign(ROUTES.DASHBOARD)
+				},
+				{
+					label: t('common.goBack'),
+					variant: 'secondary',
+					onClick: () => window.history.back()
+				}
+			]}
 		/>
 	)
 }

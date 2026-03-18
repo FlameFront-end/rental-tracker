@@ -1,59 +1,214 @@
-import { useAuthSession } from '@/app/model/use-auth-session'
-import { useHealthCheck } from '@/shared/api/services/health'
-import { env } from '@/shared/model'
+import { useState } from 'react'
+
+import { useNavigate } from 'react-router-dom'
+
+import { useConfirm } from '@/app/confirm/use-confirm'
+import { useI18n } from '@/app/i18n/use-i18n'
+import type { Booking } from '@/shared/api/services/bookings'
+import type { DashboardBookingItem } from '@/shared/api/services/dashboard'
+import { useDashboardSummaryQuery } from '@/shared/api/services/dashboard'
+import {
+	useDeleteBookingMutation,
+	useUpdateBookingStatusMutation
+} from '@/shared/api/services/bookings'
+import { useNotificationsStatusQuery } from '@/shared/api/services/notifications'
+import { Button } from '@/shared/kit'
+import {
+	formatDateLabel,
+	getApiErrorMessage,
+	getTodayDateOnly
+} from '@/shared/lib'
+import { ROUTES } from '@/shared/model'
 import { Layout } from '@/shared/widgets'
+
+import BookingCard from '@/features/bookings/components/BookingCard'
 
 import styles from './dashboard.module.scss'
 
 const DashboardPage = () => {
-	const { logout, user } = useAuthSession()
-	const { data, isLoading, isError, error } = useHealthCheck()
+	const navigate = useNavigate()
+	const confirm = useConfirm()
+	const { t } = useI18n()
+	const { data: notificationsStatus, isLoading: isNotificationsLoading } =
+		useNotificationsStatusQuery()
+	const {
+		data: summary,
+		error: summaryError,
+		isLoading: isSummaryLoading
+	} = useDashboardSummaryQuery()
+	const deleteBooking = useDeleteBookingMutation()
+	const updateBookingStatus = useUpdateBookingStatusMutation()
+	const [listError, setListError] = useState<string | null>(null)
+	const todayLabel = formatDateLabel(getTodayDateOnly())
+
+	const handleEdit = (booking: Booking) => {
+		navigate(`${ROUTES.BOOKINGS}?bookingId=${booking.id}`)
+	}
+
+	const handleDelete = async (booking: Booking) => {
+		const confirmed = await confirm({
+			title: t('bookings.confirmDeleteTitle'),
+			description: t('bookings.confirmDeleteDescription', {
+				name: booking.clientName
+			}),
+			confirmText: t('common.delete'),
+			cancelText: t('common.keep'),
+			tone: 'danger'
+		})
+
+		if (!confirmed) {
+			return
+		}
+
+		setListError(null)
+
+		try {
+			await deleteBooking.mutateAsync(booking.id)
+		} catch (deleteError) {
+			setListError(
+				getApiErrorMessage(
+					deleteError,
+					t('dashboard.errorDelete')
+				)
+			)
+		}
+	}
+
+	const handleToggleStatus = async (booking: Booking) => {
+		setListError(null)
+
+		try {
+			await updateBookingStatus.mutateAsync({
+				bookingId: booking.id,
+				status: booking.status === 'paid' ? 'pending' : 'paid'
+			})
+		} catch (statusError) {
+			setListError(
+				getApiErrorMessage(
+					statusError,
+					t('dashboard.errorStatus')
+				)
+			)
+		}
+	}
+
+	const renderSection = (
+		title: string,
+		items: DashboardBookingItem[],
+		emptyTitle: string,
+		emptyDescription: string
+	) => (
+		<section className={styles.sectionCard}>
+			<div className={styles.sectionHeader}>
+				<h2 className={styles.sectionTitle}>{title}</h2>
+				<span className={styles.sectionCount}>{items.length}</span>
+			</div>
+
+			{items.length === 0 ? (
+				<div className={styles.emptySection}>
+					<h3>{emptyTitle}</h3>
+					<p>{emptyDescription}</p>
+				</div>
+			) : (
+				<div className={styles.sectionBody}>
+					{items.map((booking) => (
+						<BookingCard
+							key={booking.id}
+							booking={booking}
+							bikeName={booking.assetName}
+							isDeleting={deleteBooking.isPending && deleteBooking.variables === booking.id}
+							isUpdatingStatus={
+								updateBookingStatus.isPending &&
+								updateBookingStatus.variables?.bookingId === booking.id
+							}
+							onDelete={handleDelete}
+							onEdit={handleEdit}
+							onToggleStatus={handleToggleStatus}
+						/>
+					))}
+				</div>
+			)}
+		</section>
+	)
+
+	const reminderLabel = isNotificationsLoading
+		? t('dashboard.checkingReminders')
+		: notificationsStatus?.botConfigured && notificationsStatus?.schedulerEnabled
+			? t('dashboard.remindersActive')
+			: t('dashboard.remindersNeedSetup')
 
 	return (
 		<Layout
-			title='Rental Tracker'
-			subtitle='Telegram auth, JWT session bootstrap, and protected routing are wired into the app shell.'
+			title={t('dashboard.title')}
+			subtitle={t('dashboard.subtitle')}
 		>
-			<section className={styles.grid}>
-				<article className={styles.card}>
-					<span className={styles.label}>Frontend</span>
-					<h2>React + Vite</h2>
-					<p>The client uses the target app/features/shared/types architecture.</p>
-				</article>
+			<div className={styles.page}>
+				<section className={styles.summaryBar}>
+					<div className={styles.summaryCopy}>
+						<span className={styles.dateLabel}>{todayLabel}</span>
+						<p className={styles.statusLine}>{reminderLabel}</p>
+					</div>
 
-				<article className={styles.card}>
-					<span className={styles.label}>API Base URL</span>
-					<h2>{env.API_URL}</h2>
-					<p>Configured through Vite env with a local fallback for development.</p>
-				</article>
+					<div className={styles.actions}>
+						<Button type='button' onClick={() => navigate(ROUTES.BOOKINGS)}>
+							{t('dashboard.newRental')}
+						</Button>
+						<Button type='button' variant='secondary' onClick={() => navigate(ROUTES.CALENDAR)}>
+							{t('dashboard.weekView')}
+						</Button>
+					</div>
+				</section>
 
-				<article className={styles.card}>
-					<span className={styles.label}>Session</span>
-					<h2>{user?.telegramId ?? 'Unknown user'}</h2>
-					<p>
-						User ID: <strong>{user?.id}</strong>
-						<br />
-						Access is now protected by the app bearer token.
+				{listError ? <p className={styles.error}>{listError}</p> : null}
+				{summaryError ? (
+					<p className={styles.error}>
+						{getApiErrorMessage(
+							summaryError,
+							t('dashboard.errorLoad')
+						)}
 					</p>
-					<button type='button' className={styles.action} onClick={logout}>
-						Log Out
-					</button>
-				</article>
+				) : null}
 
-				<article className={styles.card}>
-					<span className={styles.label}>Backend Health</span>
-					{isLoading ? <h2>Checking...</h2> : null}
-					{!isLoading && !isError ? <h2>{data?.status === 'ok' ? 'Connected' : 'Unknown'}</h2> : null}
-					{!isLoading && !isError ? (
-						<p>
-							Database: <strong>{data?.database}</strong>
-							<br />
-							Environment: <strong>{data?.environment}</strong>
-						</p>
-					) : null}
-					{isError ? <p>{error instanceof Error ? error.message : 'Backend is unavailable.'}</p> : null}
-				</article>
-			</section>
+				<section className={styles.metricsGrid}>
+					<article className={styles.metricCard}>
+						<span>{t('dashboard.metricActive')}</span>
+						<strong>{isSummaryLoading ? '...' : summary?.metrics.activeTodayCount ?? 0}</strong>
+					</article>
+					<article className={styles.metricCard}>
+						<span>{t('dashboard.metricDueToday')}</span>
+						<strong>{isSummaryLoading ? '...' : summary?.metrics.endingTodayCount ?? 0}</strong>
+					</article>
+					<article className={styles.metricCard}>
+						<span>{t('dashboard.metricUnpaid')}</span>
+						<strong>{isSummaryLoading ? '...' : summary?.metrics.pendingCount ?? 0}</strong>
+					</article>
+				</section>
+
+				{isSummaryLoading ? <div className={styles.loading}>{t('dashboard.loading')}</div> : null}
+
+				{summary ? (
+					<div className={styles.sectionsGrid}>
+						{renderSection(
+							t('dashboard.sectionDueToday'),
+							summary.endingToday,
+							t('dashboard.emptyDueTodayTitle'),
+							t('dashboard.emptyDueTodayDescription')
+						)}
+						{renderSection(
+							t('dashboard.sectionDueTomorrow'),
+							summary.endingTomorrow,
+							t('dashboard.emptyDueTomorrowTitle'),
+							t('dashboard.emptyDueTomorrowDescription')
+						)}
+						{renderSection(
+							t('dashboard.sectionPendingPayment'),
+							summary.pending,
+							t('dashboard.emptyPendingTitle'),
+							t('dashboard.emptyPendingDescription')
+						)}
+					</div>
+				) : null}
+			</div>
 		</Layout>
 	)
 }

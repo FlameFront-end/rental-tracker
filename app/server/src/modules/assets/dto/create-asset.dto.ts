@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString, MaxLength } from 'class-validator';
-
-import { AssetType } from '../enums/asset-type.enum';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateAssetDto {
   @ApiProperty({
@@ -12,11 +10,4 @@ export class CreateAssetDto {
   @IsNotEmpty()
   @MaxLength(120)
   name!: string;
-
-  @ApiProperty({
-    enum: AssetType,
-    enumName: 'AssetType',
-  })
-  @IsEnum(AssetType)
-  type!: AssetType;
 }
