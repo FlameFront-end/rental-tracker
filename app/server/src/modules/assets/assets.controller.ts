@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -23,6 +24,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AccessTokenGuard } from '../../common/guards/access-token.guard';
 import type { RequestUser } from '../../common/interfaces/request-user.interface';
 import { CreateAssetDto } from './dto/create-asset.dto';
+import { ListAssetsQueryDto } from './dto/list-assets-query.dto';
+import { PaginatedAssetsDto } from './dto/paginated-assets.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AssetEntity } from './entities/asset.entity';
 import { AssetsService } from './assets.service';
@@ -44,11 +47,22 @@ export class AssetsController {
 
   @Get()
   @ApiOkResponse({
+    type: PaginatedAssetsDto,
+  })
+  findAll(
+    @CurrentUser() user: RequestUser,
+    @Query() query: ListAssetsQueryDto,
+  ) {
+    return this.assetsService.findAll(user.userId, query);
+  }
+
+  @Get('catalog')
+  @ApiOkResponse({
     type: AssetEntity,
     isArray: true,
   })
-  findAll(@CurrentUser() user: RequestUser) {
-    return this.assetsService.findAll(user.userId);
+  findCatalog(@CurrentUser() user: RequestUser) {
+    return this.assetsService.findCatalog(user.userId);
   }
 
   @Get(':assetId')

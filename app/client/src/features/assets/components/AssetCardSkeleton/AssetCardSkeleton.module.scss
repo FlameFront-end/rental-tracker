@@ -1,0 +1,55 @@
+.card {
+	display: grid;
+	gap: 1rem;
+	padding: 1.1rem;
+	border: 1px solid var(--color-border);
+	border-radius: 1.35rem;
+	background: var(--color-surface-muted);
+}
+
+.header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.copy {
+	display: grid;
+	gap: 0.4rem;
+	min-width: 0;
+	flex: 1;
+}
+
+.title {
+	height: 1.15rem;
+	width: min(13rem, 72%);
+}
+
+.metaLine {
+	height: 0.88rem;
+}
+
+.metaLineShort {
+	height: 0.88rem;
+	width: 52%;
+}
+
+.status {
+	width: 4.8rem;
+	height: 2rem;
+	border-radius: 999px;
+	flex-shrink: 0;
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.65rem;
+}
+
+.iconAction {
+	width: 2.6rem;
+	height: 2.6rem;
+	border-radius: 0.9rem;
+}

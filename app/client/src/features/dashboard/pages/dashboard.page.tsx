@@ -12,25 +12,24 @@ import {
 	useDeleteBookingMutation,
 	useUpdateBookingStatusMutation
 } from '@/shared/api/services/bookings'
-import { useNotificationsStatusQuery } from '@/shared/api/services/notifications'
-import { Button } from '@/shared/kit'
-import {
-	getApiErrorMessage
-} from '@/shared/lib'
+import { Button, Skeleton } from '@/shared/kit'
+import { getApiErrorMessage } from '@/shared/lib'
 import { ROUTES } from '@/shared/model'
 import { Layout } from '@/shared/widgets'
 
 import BookingCard from '@/features/bookings/components/BookingCard'
+import BookingCardSkeleton from '@/features/bookings/components/BookingCardSkeleton'
 
 import styles from './dashboard.module.scss'
+
+const DASHBOARD_SKELETON_SECTION_COUNT = 3
+const DASHBOARD_SKELETON_SECTION_ITEMS = 2
 
 const DashboardPage = () => {
 	const navigate = useNavigate()
 	const confirm = useConfirm()
 	const { t } = useI18n()
 	const { error: hapticError, success } = useTelegramHaptics()
-	const { data: notificationsStatus, isLoading: isNotificationsLoading } =
-		useNotificationsStatusQuery()
 	const {
 		data: summary,
 		error: summaryError,
@@ -136,11 +135,20 @@ const DashboardPage = () => {
 		</section>
 	)
 
-	const reminderLabel = isNotificationsLoading
-		? t('dashboard.checkingReminders')
-		: notificationsStatus?.botConfigured && notificationsStatus?.schedulerEnabled
-			? t('dashboard.remindersActive')
-			: t('dashboard.remindersNeedSetup')
+	const renderSectionSkeleton = (title: string) => (
+		<section key={title} className={styles.sectionCard} aria-hidden='true'>
+			<div className={styles.sectionHeader}>
+				<h2 className={styles.sectionTitle}>{title}</h2>
+				<Skeleton className={styles.sectionCountSkeleton} />
+			</div>
+
+			<div className={styles.sectionBody}>
+				{Array.from({ length: DASHBOARD_SKELETON_SECTION_ITEMS }).map((_, index) => (
+					<BookingCardSkeleton key={index} compact />
+				))}
+			</div>
+		</section>
+	)
 
 	return (
 		<Layout
@@ -149,10 +157,6 @@ const DashboardPage = () => {
 		>
 			<div className={styles.page}>
 				<section className={styles.summaryBar}>
-					<div className={styles.summaryCopy}>
-						<p className={styles.statusLine}>{reminderLabel}</p>
-					</div>
-
 					<div className={styles.actions}>
 						<Button type='button' onClick={() => navigate(ROUTES.BOOKINGS)}>
 							{t('dashboard.newRental')}
@@ -176,21 +180,47 @@ const DashboardPage = () => {
 				<section className={styles.metricsGrid}>
 					<article className={styles.metricCard}>
 						<span>{t('dashboard.metricActive')}</span>
-						<strong>{isSummaryLoading ? '...' : summary?.metrics.activeTodayCount ?? 0}</strong>
+						<strong>
+							{isSummaryLoading ? (
+								<Skeleton className={styles.metricValueSkeleton} />
+							) : (
+								summary?.metrics.activeTodayCount ?? 0
+							)}
+						</strong>
 					</article>
 					<article className={styles.metricCard}>
 						<span>{t('dashboard.metricDueToday')}</span>
-						<strong>{isSummaryLoading ? '...' : summary?.metrics.endingTodayCount ?? 0}</strong>
+						<strong>
+							{isSummaryLoading ? (
+								<Skeleton className={styles.metricValueSkeleton} />
+							) : (
+								summary?.metrics.endingTodayCount ?? 0
+							)}
+						</strong>
 					</article>
 					<article className={styles.metricCard}>
 						<span>{t('dashboard.metricUnpaid')}</span>
-						<strong>{isSummaryLoading ? '...' : summary?.metrics.pendingCount ?? 0}</strong>
+						<strong>
+							{isSummaryLoading ? (
+								<Skeleton className={styles.metricValueSkeleton} />
+							) : (
+								summary?.metrics.pendingCount ?? 0
+							)}
+						</strong>
 					</article>
 				</section>
 
-				{isSummaryLoading ? <div className={styles.loading}>{t('dashboard.loading')}</div> : null}
+				{isSummaryLoading ? (
+					<div className={styles.sectionsGrid}>
+						{[
+							t('dashboard.sectionDueToday'),
+							t('dashboard.sectionDueTomorrow'),
+							t('dashboard.sectionPendingPayment')
+						].slice(0, DASHBOARD_SKELETON_SECTION_COUNT).map(renderSectionSkeleton)}
+					</div>
+				) : null}
 
-				{summary ? (
+				{summary && !isSummaryLoading ? (
 					<div className={styles.sectionsGrid}>
 						{renderSection(
 							t('dashboard.sectionDueToday'),

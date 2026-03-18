@@ -1,5 +1,5 @@
 export { env } from './config'
-export { APP_SECTION_ITEMS, ROUTES } from './routes'
+export { APP_SECTION_ITEMS, ROUTES, ROUTE_QUERY_KEYS } from './routes'
 export {
 	APP_LOCALES,
 	APP_LOCALE_CODES,

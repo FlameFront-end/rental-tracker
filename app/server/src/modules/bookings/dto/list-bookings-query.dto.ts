@@ -1,9 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsUUID, Matches } from 'class-validator';
 
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { BookingStatus } from '../enums/booking-status.enum';
 
-export class ListBookingsQueryDto {
+export class ListBookingsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
     format: 'uuid',
   })

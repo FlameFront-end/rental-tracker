@@ -4,8 +4,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useConfirm } from '@/app/confirm/use-confirm'
 import { useI18n } from '@/app/i18n/use-i18n'
+import {
+	getStoredBookingDraft,
+	getStoredBookingsAssetFilter,
+	persistBookingDraft,
+	persistBookingsAssetFilter
+} from '@/app/telegram/app-storage'
+import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
-import { useTelegramFormGuard } from '@/app/telegram/use-telegram-form-guard'
 import type {
 	Booking,
 	BookingFilters,
@@ -13,28 +19,36 @@ import type {
 	BookingStatus
 } from '@/shared/api/services/bookings'
 import {
+	useBookingQuery,
 	useBookingsQuery,
+	useBookingsTotalQuery,
 	useCreateBookingMutation,
 	useDeleteBookingMutation,
 	useUpdateBookingMutation,
 	useUpdateBookingStatusMutation
 } from '@/shared/api/services/bookings'
-import { useAssetsQuery } from '@/shared/api/services/assets'
-import { Button, SelectField } from '@/shared/kit'
+import { useAssetsCatalogQuery } from '@/shared/api/services/assets'
+import { Button, SelectField, Skeleton } from '@/shared/kit'
 import { getApiErrorMessage } from '@/shared/lib'
-import { ROUTES } from '@/shared/model'
+import { ROUTES, ROUTE_QUERY_KEYS } from '@/shared/model'
 import { Layout, ScreenSheet } from '@/shared/widgets'
 
 import BookingCard from '@/features/bookings/components/BookingCard'
+import BookingCardSkeleton from '@/features/bookings/components/BookingCardSkeleton'
 import BookingFormCard from '@/features/bookings/components/BookingFormCard'
 import BookingsEmptyState from '@/features/bookings/components/BookingsEmptyState'
 
 import styles from './bookings.module.scss'
 
 const ALL_FILTER_VALUE = 'all'
-const BOOKING_PREFILL_KEYS = ['bookingId', 'assetId', 'startDate', 'endDate'] as const
-const FILTER_ASSET_QUERY_KEY = 'filterAssetId'
-const FOCUS_BOOKING_QUERY_KEY = 'focusBookingId'
+const BOOKING_PREFILL_KEYS = [
+	ROUTE_QUERY_KEYS.BOOKING_ID,
+	ROUTE_QUERY_KEYS.ASSET_ID,
+	'startDate',
+	'endDate'
+] as const
+const BOOKING_STATUS_VALUES: BookingStatus[] = ['pending', 'paid']
+const BOOKING_SKELETON_COUNT = 3
 
 const BookingsPage = () => {
 	const navigate = useNavigate()
@@ -46,23 +60,31 @@ const BookingsPage = () => {
 		success
 	} = useTelegramHaptics()
 	const [searchParams, setSearchParams] = useSearchParams()
-	const assetFilterParam = searchParams.get(FILTER_ASSET_QUERY_KEY)
-	const focusBookingId = searchParams.get(FOCUS_BOOKING_QUERY_KEY)
+	const assetFilterParam = searchParams.get(ROUTE_QUERY_KEYS.FILTER_ASSET_ID)
+	const statusFilterParam = searchParams.get(ROUTE_QUERY_KEYS.BOOKING_STATUS)
+	const focusBookingId = searchParams.get(ROUTE_QUERY_KEYS.FOCUS_BOOKING_ID)
 	const selectedAssetFilter = assetFilterParam ?? ALL_FILTER_VALUE
+	const selectedStatusFilter = BOOKING_STATUS_VALUES.includes(statusFilterParam as BookingStatus)
+		? (statusFilterParam as BookingStatus)
+		: ALL_FILTER_VALUE
 	const [isComposerOpen, setIsComposerOpen] = useState(false)
 	const [formResetVersion, setFormResetVersion] = useState(0)
 	const [isComposerDirty, setIsComposerDirty] = useState(false)
-	const [selectedStatusFilter, setSelectedStatusFilter] = useState<
-		BookingStatus | typeof ALL_FILTER_VALUE
-	>(ALL_FILTER_VALUE)
 	const [formError, setFormError] = useState<string | null>(null)
 	const [listError, setListError] = useState<string | null>(null)
+	const [storedAssetFilterSeed, setStoredAssetFilterSeed] = useState(() =>
+		getStoredBookingsAssetFilter()
+	)
+	const [storedBookingDraftSeed, setStoredBookingDraftSeed] = useState<
+		Partial<BookingFormValues> | undefined
+	>(() => getStoredBookingDraft())
+	const draftRestoreRef = useRef<Partial<BookingFormValues> | undefined>(storedBookingDraftSeed)
 
 	const {
 		data: assets = [],
 		error: assetsError,
 		isLoading: isAssetsLoading
-	} = useAssetsQuery()
+	} = useAssetsCatalogQuery()
 
 	const assetOptions = useMemo(
 		() =>
@@ -103,18 +125,24 @@ const BookingsPage = () => {
 		],
 		[t]
 	)
-	const bookingIdParam = searchParams.get('bookingId')
+	const bookingIdParam = searchParams.get(ROUTE_QUERY_KEYS.BOOKING_ID)
 	const selectedBookingId = bookingIdParam
 	const hasDraftPrefill = BOOKING_PREFILL_KEYS.some((key) => Boolean(searchParams.get(key)))
 	const bookingDraft = useMemo<Partial<BookingFormValues>>(
 		() => ({
-			...(searchParams.get('assetId') ? { assetId: searchParams.get('assetId') ?? '' } : {}),
+			...(searchParams.get(ROUTE_QUERY_KEYS.ASSET_ID)
+				? { assetId: searchParams.get(ROUTE_QUERY_KEYS.ASSET_ID) ?? '' }
+				: {}),
 			...(searchParams.get('startDate')
 				? { startDate: searchParams.get('startDate') ?? '' }
 				: {}),
 			...(searchParams.get('endDate') ? { endDate: searchParams.get('endDate') ?? '' } : {})
 		}),
 		[searchParams]
+	)
+	const composerDraftValues = useMemo<Partial<BookingFormValues> | undefined>(
+		() => (hasDraftPrefill ? bookingDraft : storedBookingDraftSeed),
+		[bookingDraft, hasDraftPrefill, storedBookingDraftSeed]
 	)
 	const bookingFilters = useMemo<BookingFilters>(
 		() => ({
@@ -130,7 +158,11 @@ const BookingsPage = () => {
 	const {
 		data: bookings = [],
 		error: bookingsError,
-		isLoading: isBookingsLoading
+		fetchNextPage,
+		hasMore = false,
+		isFetchingMore,
+		isLoading: isBookingsLoading,
+		total
 	} = useBookingsQuery(bookingFilters)
 	const createBooking = useCreateBookingMutation()
 	const updateBooking = useUpdateBookingMutation()
@@ -138,16 +170,68 @@ const BookingsPage = () => {
 	const updateBookingStatus = useUpdateBookingStatusMutation()
 	const bookingItemRefs = useRef<Record<string, HTMLDivElement | null>>({})
 	const lastFocusedBookingRef = useRef<string | null>(null)
-	const selectedBooking = useMemo(
+	const bookingFromList = useMemo(
 		() => bookings.find((booking) => booking.id === selectedBookingId),
 		[bookings, selectedBookingId]
 	)
+	const {
+		data: selectedBookingDetail,
+		isLoading: isSelectedBookingLoading
+	} = useBookingQuery(selectedBookingId, Boolean(selectedBookingId && !bookingFromList))
+	const selectedBooking = bookingFromList ?? selectedBookingDetail
+	const pendingMetricFilters = useMemo<BookingFilters>(
+		() => ({
+			...(selectedAssetFilter !== ALL_FILTER_VALUE ? { assetId: selectedAssetFilter } : {}),
+			status: 'pending'
+		}),
+		[selectedAssetFilter]
+	)
+	const shouldLoadPendingMetric = assets.length > 0 && selectedStatusFilter === ALL_FILTER_VALUE
+	const {
+		data: pendingBookingsTotal = 0,
+		isLoading: isPendingMetricLoading
+	} = useBookingsTotalQuery(pendingMetricFilters, shouldLoadPendingMetric)
+	const totalBookings = total || bookings.length
+	const pendingCount =
+		selectedStatusFilter === 'pending'
+			? totalBookings
+			: selectedStatusFilter === 'paid'
+				? 0
+				: pendingBookingsTotal
+	const isBookingsInitialLoading = isBookingsLoading && bookings.length === 0
 	const isComposerVisible =
-		assets.length > 0 && (isComposerOpen || Boolean(selectedBookingId) || hasDraftPrefill)
-	const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
+		assets.length > 0 && (isComposerOpen || Boolean(selectedBooking) || hasDraftPrefill)
+	const isPageLoading = isAssetsLoading || isBookingsInitialLoading
 
 	useEffect(() => {
-		if (!focusBookingId || isBookingsLoading || bookings.length === 0) {
+		if (assetFilterParam || isAssetsLoading || !storedAssetFilterSeed) {
+			return
+		}
+
+		if (!assets.some((asset) => asset.id === storedAssetFilterSeed)) {
+			persistBookingsAssetFilter(undefined)
+			setStoredAssetFilterSeed(undefined)
+			return
+		}
+
+		const nextSearchParams = new URLSearchParams(searchParams)
+
+		nextSearchParams.set(ROUTE_QUERY_KEYS.FILTER_ASSET_ID, storedAssetFilterSeed)
+
+		setSearchParams(nextSearchParams, {
+			replace: true
+		})
+	}, [
+		assetFilterParam,
+		assets,
+		isAssetsLoading,
+		searchParams,
+		setSearchParams,
+		storedAssetFilterSeed
+	])
+
+	useEffect(() => {
+		if (!focusBookingId || isBookingsInitialLoading) {
 			return
 		}
 
@@ -155,24 +239,54 @@ const BookingsPage = () => {
 			return
 		}
 
-		const focusedBookingExists = bookings.some((booking) => booking.id === focusBookingId)
-
-		if (!focusedBookingExists) {
-			return
-		}
-
 		const element = bookingItemRefs.current[focusBookingId]
 
-		if (!element) {
+		if (element) {
+			lastFocusedBookingRef.current = focusBookingId
+			element.scrollIntoView({
+				behavior: 'smooth',
+				block: 'center'
+			})
 			return
 		}
 
-		lastFocusedBookingRef.current = focusBookingId
-		element.scrollIntoView({
-			behavior: 'smooth',
-			block: 'center'
+		if (bookings.some((booking) => booking.id === focusBookingId) || isFetchingMore) {
+			return
+		}
+
+		if (hasMore) {
+			void fetchNextPage()
+		}
+	}, [bookings, fetchNextPage, focusBookingId, hasMore, isBookingsInitialLoading, isFetchingMore])
+
+	useEffect(() => {
+		if (!selectedBookingId || isBookingsInitialLoading || isSelectedBookingLoading || selectedBooking) {
+			return
+		}
+
+		const nextSearchParams = new URLSearchParams(searchParams)
+
+		nextSearchParams.delete(ROUTE_QUERY_KEYS.BOOKING_ID)
+
+		setSearchParams(nextSearchParams, {
+			replace: true
 		})
-	}, [bookings, focusBookingId, isBookingsLoading])
+	}, [
+		isBookingsInitialLoading,
+		isSelectedBookingLoading,
+		searchParams,
+		selectedBooking,
+		selectedBookingId,
+		setSearchParams
+	])
+
+	useEffect(() => {
+		if (!hasDraftPrefill || !isComposerVisible || selectedBooking) {
+			return
+		}
+
+		draftRestoreRef.current = storedBookingDraftSeed
+	}, [hasDraftPrefill, isComposerVisible, selectedBooking, storedBookingDraftSeed])
 
 	const clearBookingSearchParams = useCallback(() => {
 		const nextSearchParams = new URLSearchParams(searchParams)
@@ -190,9 +304,28 @@ const BookingsPage = () => {
 		const nextSearchParams = new URLSearchParams(searchParams)
 
 		if (nextValue === ALL_FILTER_VALUE) {
-			nextSearchParams.delete(FILTER_ASSET_QUERY_KEY)
+			nextSearchParams.delete(ROUTE_QUERY_KEYS.FILTER_ASSET_ID)
 		} else {
-			nextSearchParams.set(FILTER_ASSET_QUERY_KEY, nextValue)
+			nextSearchParams.set(ROUTE_QUERY_KEYS.FILTER_ASSET_ID, nextValue)
+		}
+
+		const nextAssetFilter = nextValue === ALL_FILTER_VALUE ? undefined : nextValue
+
+		setStoredAssetFilterSeed(nextAssetFilter)
+		persistBookingsAssetFilter(nextAssetFilter)
+
+		setSearchParams(nextSearchParams, {
+			replace: true
+		})
+	}, [searchParams, setSearchParams])
+
+	const updateStatusFilter = useCallback((nextValue: BookingStatus | typeof ALL_FILTER_VALUE) => {
+		const nextSearchParams = new URLSearchParams(searchParams)
+
+		if (nextValue === ALL_FILTER_VALUE) {
+			nextSearchParams.delete(ROUTE_QUERY_KEYS.BOOKING_STATUS)
+		} else {
+			nextSearchParams.set(ROUTE_QUERY_KEYS.BOOKING_STATUS, nextValue)
 		}
 
 		setSearchParams(nextSearchParams, {
@@ -201,6 +334,10 @@ const BookingsPage = () => {
 	}, [searchParams, setSearchParams])
 
 	const handleStartCreate = useCallback(() => {
+		const nextStoredDraft = getStoredBookingDraft()
+
+		draftRestoreRef.current = nextStoredDraft
+		setStoredBookingDraftSeed(nextStoredDraft)
 		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
@@ -224,28 +361,50 @@ const BookingsPage = () => {
 			}
 		}
 
+		if (!selectedBooking && isComposerDirty) {
+			const restoredDraft = persistBookingDraft(draftRestoreRef.current)
+
+			setStoredBookingDraftSeed(restoredDraft)
+		}
+
 		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
 		setIsComposerOpen(false)
 		setFormResetVersion((current) => current + 1)
 		clearBookingSearchParams()
-	}, [clearBookingSearchParams, confirm, isComposerDirty, t])
+	}, [clearBookingSearchParams, confirm, isComposerDirty, selectedBooking, t])
 
 	const handleClearFilters = useCallback(() => {
-		updateAssetFilter(ALL_FILTER_VALUE)
-		setSelectedStatusFilter(ALL_FILTER_VALUE)
+		const nextSearchParams = new URLSearchParams(searchParams)
+
+		nextSearchParams.delete(ROUTE_QUERY_KEYS.FILTER_ASSET_ID)
+		nextSearchParams.delete(ROUTE_QUERY_KEYS.BOOKING_STATUS)
+
+		setStoredAssetFilterSeed(undefined)
+		persistBookingsAssetFilter(undefined)
+		setSearchParams(nextSearchParams, {
+			replace: true
+		})
 		setListError(null)
-	}, [updateAssetFilter])
+	}, [searchParams, setSearchParams])
 
 	const handleOpenBikes = useCallback(() => {
 		navigate(ROUTES.ASSETS)
 	}, [navigate])
+	const handleBackToDashboard = useCallback(() => {
+		navigate(ROUTES.DASHBOARD)
+	}, [navigate])
 
-	useTelegramFormGuard({
-		active: isComposerVisible,
-		isDirty: isComposerDirty
-	})
+	const handleLoadMore = useCallback(() => {
+		if (!hasMore || isFetchingMore) {
+			return
+		}
+
+		void fetchNextPage()
+	}, [fetchNextPage, hasMore, isFetchingMore])
+
+	useTelegramBackButton(!isComposerVisible, handleBackToDashboard)
 
 	const handleEdit = (booking: Booking) => {
 		setIsComposerDirty(false)
@@ -254,9 +413,9 @@ const BookingsPage = () => {
 		setIsComposerOpen(true)
 		const nextSearchParams = new URLSearchParams(searchParams)
 
-		nextSearchParams.set('bookingId', booking.id)
-		nextSearchParams.delete(FOCUS_BOOKING_QUERY_KEY)
-		nextSearchParams.delete('assetId')
+		nextSearchParams.set(ROUTE_QUERY_KEYS.BOOKING_ID, booking.id)
+		nextSearchParams.delete(ROUTE_QUERY_KEYS.FOCUS_BOOKING_ID)
+		nextSearchParams.delete(ROUTE_QUERY_KEYS.ASSET_ID)
 		nextSearchParams.delete('startDate')
 		nextSearchParams.delete('endDate')
 
@@ -264,6 +423,22 @@ const BookingsPage = () => {
 			replace: true
 		})
 	}
+
+	const handleDraftChange = useCallback(
+		(draft: Partial<BookingFormValues>, isDirty: boolean) => {
+			if (selectedBooking) {
+				return
+			}
+
+			if (!isDirty) {
+				persistBookingDraft(draftRestoreRef.current)
+				return
+			}
+
+			persistBookingDraft(draft)
+		},
+		[selectedBooking]
+	)
 
 	const handleSubmit = async (values: BookingFormValues) => {
 		setFormError(null)
@@ -276,6 +451,9 @@ const BookingsPage = () => {
 				})
 			} else {
 				await createBooking.mutateAsync(values)
+				persistBookingDraft(undefined)
+				setStoredBookingDraftSeed(undefined)
+				draftRestoreRef.current = undefined
 			}
 
 			setFormResetVersion((current) => current + 1)
@@ -345,7 +523,7 @@ const BookingsPage = () => {
 					</p>
 				) : null}
 
-				{!isAssetsLoading && assets.length === 0 ? (
+				{!assetsError && !isAssetsLoading && assets.length === 0 ? (
 					<BookingsEmptyState
 						hasBikes={false}
 						hasFilters={false}
@@ -360,59 +538,95 @@ const BookingsPage = () => {
 							<div className={styles.metricList}>
 								<div className={styles.metric}>
 									<span>{t('bookings.metricRentals')}</span>
-									<strong>{bookings.length}</strong>
+									<strong>
+										{isPageLoading ? (
+											<Skeleton className={styles.metricValueSkeleton} />
+										) : (
+											totalBookings
+										)}
+									</strong>
 								</div>
 								<div className={styles.metric}>
 									<span>{t('bookings.metricPending')}</span>
-									<strong>{pendingCount}</strong>
+									<strong>
+										{isPageLoading || isPendingMetricLoading ? (
+											<Skeleton className={styles.metricValueSkeleton} />
+										) : (
+											pendingCount
+										)}
+									</strong>
 								</div>
 							</div>
 
-							<Button type='button' onClick={handleStartCreate}>
+							<Button type='button' onClick={handleStartCreate} disabled={isAssetsLoading}>
 								{t('bookings.newRental')}
 							</Button>
 						</section>
 
-						<section className={styles.filtersCard}>
-							<div className={styles.filterGrid}>
-								<SelectField
-									id='bookings-filter-bike'
-									label={t('bookings.filterBike')}
-									options={assetFilterOptions}
-									value={selectedAssetFilter}
-									onChange={(event) => {
-										if (event.target.value !== selectedAssetFilter) {
-											selectionChanged()
-										}
-										updateAssetFilter(event.target.value)
-									}}
-								/>
-								<SelectField
-									id='bookings-filter-status'
-									label={t('bookings.filterStatus')}
-									options={statusFilterOptions}
-									value={selectedStatusFilter}
-									onChange={(event) => {
-										if (event.target.value !== selectedStatusFilter) {
-											selectionChanged()
-										}
-										setSelectedStatusFilter(
-											event.target.value as BookingStatus | typeof ALL_FILTER_VALUE
-										)
-									}}
-								/>
-							</div>
-						</section>
+						{isAssetsLoading || assets.length > 0 ? (
+							<section className={styles.filtersCard}>
+								<div className={styles.filterGrid}>
+									{isAssetsLoading ? (
+										<>
+											<div className={styles.filterSkeleton}>
+												<Skeleton className={styles.filterSkeletonLabel} />
+												<Skeleton className={styles.filterSkeletonField} />
+											</div>
+											<div className={styles.filterSkeleton}>
+												<Skeleton className={styles.filterSkeletonLabel} />
+												<Skeleton className={styles.filterSkeletonField} />
+											</div>
+										</>
+									) : (
+										<>
+											<SelectField
+												id='bookings-filter-bike'
+												label={t('bookings.filterBike')}
+												options={assetFilterOptions}
+												value={selectedAssetFilter}
+												onChange={(event) => {
+													if (event.target.value !== selectedAssetFilter) {
+														selectionChanged()
+													}
+													updateAssetFilter(event.target.value)
+												}}
+											/>
+											<SelectField
+												id='bookings-filter-status'
+												label={t('bookings.filterStatus')}
+												options={statusFilterOptions}
+												value={selectedStatusFilter}
+												onChange={(event) => {
+													if (event.target.value !== selectedStatusFilter) {
+														selectionChanged()
+													}
+													updateStatusFilter(
+														event.target.value as BookingStatus | typeof ALL_FILTER_VALUE
+													)
+												}}
+											/>
+										</>
+									)}
+								</div>
+							</section>
+						) : null}
 
 						<section className={styles.listPanel}>
 							<div className={styles.listHeader}>
 								<div>
 									<h2 className={styles.sectionTitle}>{t('bookings.sectionTitle')}</h2>
-									<p className={styles.sectionDescription}>
-										{hasFilters
-											? t('bookings.filteredResults')
-											: t('bookings.allCurrentRentals')}
-									</p>
+									{isPageLoading ? (
+										<div className={styles.sectionDescriptionSkeletons}>
+											<Skeleton className={styles.sectionDescriptionSkeleton} />
+											<Skeleton className={styles.sectionDescriptionSkeletonShort} />
+										</div>
+									) : (
+										<p className={styles.sectionDescription}>
+											{hasFilters
+												? t('bookings.filteredResults')
+												: t('bookings.allCurrentRentals')}
+										</p>
+									)}
 								</div>
 								{hasFilters ? (
 									<Button type='button' variant='ghost' onClick={handleClearFilters}>
@@ -427,10 +641,7 @@ const BookingsPage = () => {
 									{getApiErrorMessage(bookingsError, t('bookings.errorLoad'))}
 								</p>
 							) : null}
-							{isBookingsLoading ? (
-								<div className={styles.loading}>{t('bookings.loading')}</div>
-							) : null}
-							{!isBookingsLoading && bookings.length === 0 ? (
+							{!bookingsError && !isBookingsInitialLoading && totalBookings === 0 ? (
 								<BookingsEmptyState
 									hasBikes
 									hasFilters={hasFilters}
@@ -440,34 +651,51 @@ const BookingsPage = () => {
 								/>
 							) : null}
 							<div className={styles.bookingList}>
-								{bookings.map((booking) => (
-									<div
-										key={booking.id}
-										ref={(element) => {
-											bookingItemRefs.current[booking.id] = element
-										}}
-										className={
-											booking.id === focusBookingId ? styles.focusedBookingItem : undefined
-										}
-									>
-										<BookingCard
-											booking={booking}
-											bikeName={assetNameMap[booking.assetId] ?? t('bookings.unknownBike')}
-											isDeleting={
-												deleteBooking.isPending && deleteBooking.variables === booking.id
-											}
-											isEditing={selectedBookingId === booking.id}
-											isUpdatingStatus={
-												updateBookingStatus.isPending &&
-												updateBookingStatus.variables?.bookingId === booking.id
-											}
-											onDelete={handleDelete}
-											onEdit={handleEdit}
-											onToggleStatus={handleToggleStatus}
-										/>
-									</div>
-								))}
+								{isPageLoading
+									? Array.from({ length: BOOKING_SKELETON_COUNT }).map((_, index) => (
+											<BookingCardSkeleton key={index} />
+										))
+									: bookings.map((booking) => (
+											<div
+												key={booking.id}
+												ref={(element) => {
+													bookingItemRefs.current[booking.id] = element
+												}}
+												className={
+													booking.id === focusBookingId ? styles.focusedBookingItem : undefined
+												}
+											>
+												<BookingCard
+													booking={booking}
+													bikeName={assetNameMap[booking.assetId] ?? t('bookings.unknownBike')}
+													isDeleting={
+														deleteBooking.isPending && deleteBooking.variables === booking.id
+													}
+													isEditing={selectedBookingId === booking.id}
+													isUpdatingStatus={
+														updateBookingStatus.isPending &&
+														updateBookingStatus.variables?.bookingId === booking.id
+													}
+													onDelete={handleDelete}
+													onEdit={handleEdit}
+													onToggleStatus={handleToggleStatus}
+												/>
+											</div>
+										))}
 							</div>
+							{!isBookingsInitialLoading && hasMore ? (
+								<div className={styles.paginationActions}>
+									<Button
+										type='button'
+										variant='secondary'
+										className={styles.loadMoreButton}
+										disabled={isFetchingMore}
+										onClick={handleLoadMore}
+									>
+										{isFetchingMore ? t('common.loadingMore') : t('bookings.loadMore')}
+									</Button>
+								</div>
+							) : null}
 						</section>
 					</>
 				) : null}
@@ -476,9 +704,10 @@ const BookingsPage = () => {
 					<BookingFormCard
 						assetOptions={assetOptions}
 						booking={selectedBooking}
-						draftValues={selectedBooking ? undefined : bookingDraft}
+						draftValues={selectedBooking ? undefined : composerDraftValues}
 						error={formError}
 						isSubmitting={createBooking.isPending || updateBooking.isPending}
+						onDraftChange={handleDraftChange}
 						onDirtyChange={setIsComposerDirty}
 						onCancelEdit={handleCloseComposer}
 						onSubmit={handleSubmit}

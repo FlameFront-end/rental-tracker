@@ -34,6 +34,26 @@ export class UserEntity {
   })
   createdAt!: Date;
 
+  @ApiProperty({
+    example: true,
+  })
+  @Column({
+    name: 'notification_reminder_today_enabled',
+    type: 'boolean',
+    default: true,
+  })
+  notificationReminderTodayEnabled!: boolean;
+
+  @ApiProperty({
+    example: true,
+  })
+  @Column({
+    name: 'notification_reminder_tomorrow_enabled',
+    type: 'boolean',
+    default: true,
+  })
+  notificationReminderTomorrowEnabled!: boolean;
+
   @OneToMany(() => AssetEntity, (asset) => asset.user)
   assets!: AssetEntity[];
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { ApiAccessTokenAuth } from '../../common/decorators/api-access-token-auth.decorator';
@@ -6,8 +6,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AccessTokenGuard } from '../../common/guards/access-token.guard';
 import type { RequestUser } from '../../common/interfaces/request-user.interface';
 import { DispatchNotificationsDto } from './dto/dispatch-notifications.dto';
+import { NotificationsPreferencesDto } from './dto/notifications-preferences.dto';
 import { NotificationsDispatchResultDto } from './dto/notifications-dispatch-result.dto';
 import { NotificationsStatusDto } from './dto/notifications-status.dto';
+import { UpdateNotificationsPreferencesDto } from './dto/update-notifications-preferences.dto';
 import { NotificationsService } from './notifications.service';
 
 @ApiTags('notifications')
@@ -23,6 +25,25 @@ export class NotificationsController {
   })
   getStatus() {
     return this.notificationsService.getStatus();
+  }
+
+  @Get('preferences')
+  @ApiOkResponse({
+    type: NotificationsPreferencesDto,
+  })
+  getPreferences(@CurrentUser() user: RequestUser) {
+    return this.notificationsService.getPreferences(user.userId);
+  }
+
+  @Patch('preferences')
+  @ApiOkResponse({
+    type: NotificationsPreferencesDto,
+  })
+  updatePreferences(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: UpdateNotificationsPreferencesDto,
+  ) {
+    return this.notificationsService.updatePreferences(user.userId, dto);
   }
 
   @Post('run')

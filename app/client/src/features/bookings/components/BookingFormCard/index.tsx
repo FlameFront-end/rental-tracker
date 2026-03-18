@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useAuthSession } from '@/app/session/use-auth-session'
 import type { Booking, BookingFormValues } from '@/shared/api/services/bookings'
 import { Button, SelectField, TextField } from '@/shared/kit'
 import { addDaysToDateOnly, getTodayDateOnly } from '@/shared/lib'
@@ -20,6 +21,7 @@ interface BookingFormCardProps {
 	draftValues?: Partial<BookingFormValues>
 	error?: string | null
 	isSubmitting?: boolean
+	onDraftChange?: (draft: Partial<BookingFormValues>, isDirty: boolean) => void
 	onDirtyChange?: (isDirty: boolean) => void
 	onCancelEdit: () => void
 	onSubmit: (values: BookingFormValues) => Promise<void> | void
@@ -48,12 +50,14 @@ const BookingFormCard = ({
 	draftValues,
 	error,
 	isSubmitting = false,
+	onDraftChange,
 	onDirtyChange,
 	onCancelEdit,
 	onSubmit,
 	resetVersion
 }: BookingFormCardProps) => {
 	const { t } = useI18n()
+	const { isTelegramEnvironment } = useAuthSession()
 	const isEditMode = Boolean(booking)
 	const defaultAssetId = assetOptions[0]?.value ?? ''
 	const bookingSchema = z
@@ -87,11 +91,13 @@ const BookingFormCard = ({
 		formState: { errors, isDirty },
 		handleSubmit,
 		register,
-		reset
+		reset,
+		watch
 	} = useForm<BookingFormValues>({
 		defaultValues: createDefaultValues(booking, defaultAssetId, draftValues),
 		resolver: zodResolver(bookingSchema)
 	})
+	const watchedValues = watch()
 
 	const handleCancel = () => {
 		reset(createDefaultValues(undefined, defaultAssetId, draftValues))
@@ -105,6 +111,10 @@ const BookingFormCard = ({
 	useEffect(() => {
 		onDirtyChange?.(isDirty)
 	}, [isDirty, onDirtyChange])
+
+	useEffect(() => {
+		onDraftChange?.(watchedValues, isDirty)
+	}, [isDirty, onDraftChange, watchedValues])
 
 	return (
 		<aside className={styles.card}>
@@ -185,7 +195,7 @@ const BookingFormCard = ({
 								? t('common.save')
 								: t('common.createRental')}
 					</Button>
-					{isEditMode ? (
+					{isEditMode && !isTelegramEnvironment ? (
 						<Button type='button' variant='secondary' onClick={handleCancel}>
 							{t('common.close')}
 						</Button>

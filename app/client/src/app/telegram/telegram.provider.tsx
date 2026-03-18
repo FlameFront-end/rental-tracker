@@ -1,10 +1,20 @@
-import { useEffect, useMemo, useRef, type PropsWithChildren } from 'react'
+import { useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react'
 
-import { init, miniApp, retrieveLaunchParams, useSignal, viewport } from '@tma.js/sdk-react'
+import {
+	backButton,
+	closingBehavior,
+	init,
+	miniApp,
+	retrieveLaunchParams,
+	swipeBehavior,
+	useSignal,
+	viewport
+} from '@tma.js/sdk-react'
 
 import { useAuthSession } from '@/app/session/use-auth-session'
 import { useTheme } from '@/app/theme/theme.context'
 import { getThemePalette } from '@/app/theme/theme.palette'
+import { TelegramBackButtonProvider } from '@/app/telegram/telegram-back-button'
 
 const tryRun = (callback: () => void) => {
 	try {
@@ -24,6 +34,7 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 	const isExpandedRef = useRef(false)
 	const isFullscreenRequestedRef = useRef(false)
 	const unbindViewportCssVarsRef = useRef<VoidFunction | null>(null)
+	const [isBackButtonReady, setIsBackButtonReady] = useState(false)
 	const safeAreaInsetTop = useSignal(viewport.safeAreaInsetTop, () => 0)
 	const contentSafeAreaInsetTop = useSignal(viewport.contentSafeAreaInsetTop, () => 0)
 	const safeAreaInsetBottom = useSignal(viewport.safeAreaInsetBottom, () => 0)
@@ -56,7 +67,19 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 
 		try {
 			cleanup = init()
+			tryRun(() => {
+				backButton.mount()
+				setIsBackButtonReady(true)
+			})
+			tryRun(() => {
+				closingBehavior.mount()
+				closingBehavior.enableConfirmation()
+			})
 			tryRun(() => miniApp.mount())
+			tryRun(() => {
+				swipeBehavior.mount()
+				swipeBehavior.disableVertical()
+			})
 			void viewport
 				.mount()
 				.then(() => {
@@ -76,7 +99,13 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 			cleanup?.()
 			unbindViewportCssVarsRef.current?.()
 			unbindViewportCssVarsRef.current = null
+			tryRun(() => backButton.unmount())
+			setIsBackButtonReady(false)
+			tryRun(() => closingBehavior.disableConfirmation())
+			tryRun(() => closingBehavior.unmount())
 			tryRun(() => miniApp.unmount())
+			tryRun(() => swipeBehavior.enableVertical())
+			tryRun(() => swipeBehavior.unmount())
 			isInitializedRef.current = false
 			isReadyRef.current = false
 			isExpandedRef.current = false
@@ -136,6 +165,23 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 	])
 
 	useEffect(() => {
+		if (!isTelegramEnvironment) {
+			return
+		}
+
+		if (!isReadyRef.current) {
+			const frame = requestAnimationFrame(() => {
+				tryRun(() => miniApp.ready())
+				isReadyRef.current = true
+			})
+
+			return () => {
+				cancelAnimationFrame(frame)
+			}
+		}
+	}, [isTelegramEnvironment])
+
+	useEffect(() => {
 		if (!isTelegramEnvironment || status === 'bootstrapping') {
 			return
 		}
@@ -144,11 +190,6 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 			if (!isExpandedRef.current) {
 				tryRun(() => viewport.expand())
 				isExpandedRef.current = true
-			}
-
-			if (!isReadyRef.current) {
-				tryRun(() => miniApp.ready())
-				isReadyRef.current = true
 			}
 
 			if (isMobileTelegramPlatform && !isFullscreenRequestedRef.current) {
@@ -175,5 +216,9 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 		isFullscreenRequestedRef.current = false
 	}, [isFullscreen, isMobileTelegramPlatform, isTelegramEnvironment])
 
-	return children
+	return (
+		<TelegramBackButtonProvider enabled={isTelegramEnvironment && isBackButtonReady}>
+			{children}
+		</TelegramBackButtonProvider>
+	)
 }

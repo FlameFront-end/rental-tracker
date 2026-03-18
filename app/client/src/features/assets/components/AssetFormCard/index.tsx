@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useAuthSession } from '@/app/session/use-auth-session'
 import type { Asset, AssetFormValues } from '@/shared/api/services/assets'
 import { Button, TextField } from '@/shared/kit'
 
@@ -34,6 +35,7 @@ const AssetFormCard = ({
 	resetVersion
 }: AssetFormCardProps) => {
 	const { t } = useI18n()
+	const { isTelegramEnvironment } = useAuthSession()
 	const isEditMode = Boolean(asset)
 	const assetSchema = z.object({
 		name: z
@@ -97,7 +99,7 @@ const AssetFormCard = ({
 								? t('common.save')
 								: t('common.createBike')}
 					</Button>
-					{isEditMode ? (
+					{isEditMode && !isTelegramEnvironment ? (
 						<Button type='button' variant='secondary' onClick={handleCancel}>
 							{t('common.close')}
 						</Button>

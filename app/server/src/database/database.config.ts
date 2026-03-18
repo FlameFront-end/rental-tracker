@@ -3,6 +3,7 @@ import type { DataSourceOptions } from 'typeorm';
 import { InitialSchema1710878400000 } from './migrations/1710878400000-initial-schema';
 import { RemoveAssetType1710964800000 } from './migrations/1710964800000-remove-asset-type';
 import { AddNotificationDeliveries1711051200000 } from './migrations/1711051200000-add-notification-deliveries';
+import { AddUserNotificationPreferences1711137600000 } from './migrations/1711137600000-add-user-notification-preferences';
 import { AssetEntity } from '../modules/assets/entities/asset.entity';
 import { BookingEntity } from '../modules/bookings/entities/booking.entity';
 import { NotificationDeliveryEntity } from '../modules/notifications/entities/notification-delivery.entity';
@@ -18,6 +19,7 @@ export const databaseMigrations = [
   InitialSchema1710878400000,
   RemoveAssetType1710964800000,
   AddNotificationDeliveries1711051200000,
+  AddUserNotificationPreferences1711137600000,
 ];
 
 export function buildDataSourceOptions(): DataSourceOptions {

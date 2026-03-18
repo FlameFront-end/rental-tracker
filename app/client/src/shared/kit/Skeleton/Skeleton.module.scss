@@ -1,0 +1,35 @@
+.skeleton {
+	position: relative;
+	display: block;
+	min-height: 1rem;
+	overflow: hidden;
+	border-radius: 0.85rem;
+	background: var(--color-skeleton-base);
+	isolation: isolate;
+}
+
+.skeleton::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		var(--color-skeleton-highlight) 48%,
+		transparent 100%
+	);
+	transform: translateX(-100%);
+	animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.skeleton::after {
+		animation: none;
+	}
+}
+
+@keyframes skeleton-shimmer {
+	100% {
+		transform: translateX(100%);
+	}
+}

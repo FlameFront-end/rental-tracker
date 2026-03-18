@@ -1,2 +1,11 @@
-export { notificationsKeys, useNotificationsStatusQuery } from './notifications.api'
-export type { NotificationsStatus } from './notifications.api'
+export {
+	notificationsKeys,
+	useNotificationsPreferencesQuery,
+	useNotificationsStatusQuery,
+	useUpdateNotificationsPreferencesMutation
+} from './notifications.api'
+export type {
+	NotificationsPreferences,
+	NotificationsStatus,
+	UpdateNotificationsPreferencesPayload
+} from './notifications.api'

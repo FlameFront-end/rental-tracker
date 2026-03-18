@@ -38,6 +38,11 @@
 	line-height: 1;
 }
 
+.metricValueSkeleton {
+	width: 4.25rem;
+	height: 1.35rem;
+}
+
 .sectionTitle {
 	font-family: var(--font-display);
 	font-size: 1.15rem;
@@ -52,9 +57,37 @@
 	line-height: 1.4;
 }
 
+.sectionDescriptionSkeletons {
+	display: grid;
+	gap: 0.35rem;
+	margin-top: 0.3rem;
+}
+
+.sectionDescriptionSkeleton,
+.sectionDescriptionSkeletonShort {
+	height: 0.88rem;
+}
+
+.sectionDescriptionSkeleton {
+	width: min(18rem, 100%);
+}
+
+.sectionDescriptionSkeletonShort {
+	width: min(11rem, 72%);
+}
+
 .assetList {
 	display: grid;
 	gap: 0.7rem;
+}
+
+.paginationActions {
+	display: flex;
+	justify-content: center;
+}
+
+.loadMoreButton {
+	width: 100%;
 }
 
 .loading,
@@ -78,5 +111,9 @@
 	.summaryBar {
 		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: center;
+	}
+
+	.loadMoreButton {
+		width: auto;
 	}
 }

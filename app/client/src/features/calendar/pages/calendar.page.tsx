@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 import { useDashboardOccupancyQuery } from '@/shared/api/services/dashboard'
-import { Button } from '@/shared/kit'
+import { Button, Skeleton } from '@/shared/kit'
 import {
 	addDaysToDateOnly,
 	formatDateRange,
@@ -19,8 +20,34 @@ import { Layout } from '@/shared/widgets'
 import styles from './calendar.module.scss'
 
 const CALENDAR_WINDOW_DAYS = 7
+const CALENDAR_SKELETON_BIKES = 3
+
+const CalendarBikeSkeleton = () => {
+	return (
+		<article className={styles.bikeCard} aria-hidden='true'>
+			<div className={styles.bikeHeader}>
+				<div className={styles.bikeHeaderCopy}>
+					<Skeleton className={styles.bikeNameSkeleton} />
+					<Skeleton className={styles.bikeSummarySkeleton} />
+				</div>
+				<Skeleton className={styles.rowLinkSkeleton} />
+			</div>
+
+			<div className={styles.dayStrip}>
+				{Array.from({ length: CALENDAR_WINDOW_DAYS }).map((_, index) => (
+					<div key={index} className={styles.daySkeleton}>
+						<Skeleton className={styles.dayLabelSkeleton} />
+						<Skeleton className={styles.dayTitleSkeleton} />
+						<Skeleton className={styles.dayMetaSkeleton} />
+					</div>
+				))}
+			</div>
+		</article>
+	)
+}
 
 const CalendarPage = () => {
+	const navigate = useNavigate()
 	const { t } = useI18n()
 	const todayDate = getTodayDateOnly()
 	const [rangeStart, setRangeStart] = useState(todayDate)
@@ -38,6 +65,11 @@ const CalendarPage = () => {
 	const handleResetRange = () => {
 		setRangeStart(todayDate)
 	}
+	const handleBackToDashboard = useCallback(() => {
+		navigate(ROUTES.DASHBOARD)
+	}, [navigate])
+
+	useTelegramBackButton(true, handleBackToDashboard)
 
 	return (
 		<Layout title={t('calendar.title')} subtitle={t('calendar.subtitle')}>
@@ -85,8 +117,6 @@ const CalendarPage = () => {
 					</p>
 				) : null}
 
-				{isLoading ? <div className={styles.loading}>{t('calendar.loading')}</div> : null}
-
 				{!isLoading && data && data.bikes.length === 0 ? (
 					<section className={styles.emptyState}>
 						<h3 className={styles.emptyTitle}>{t('calendar.emptyTitle')}</h3>
@@ -97,7 +127,15 @@ const CalendarPage = () => {
 					</section>
 				) : null}
 
-				{data && data.bikes.length > 0 ? (
+				{isLoading ? (
+					<section className={styles.timelineList}>
+						{Array.from({ length: CALENDAR_SKELETON_BIKES }).map((_, index) => (
+							<CalendarBikeSkeleton key={index} />
+						))}
+					</section>
+				) : null}
+
+				{!isLoading && data && data.bikes.length > 0 ? (
 					<section className={styles.timelineList}>
 						{data.bikes.map((bike) => (
 							<article key={bike.assetId} className={styles.bikeCard}>

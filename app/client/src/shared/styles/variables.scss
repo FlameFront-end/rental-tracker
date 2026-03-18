@@ -32,6 +32,8 @@
 	--color-warning-text: #ffd0ac;
 	--color-danger-soft: rgba(255, 105, 105, 0.15);
 	--color-danger-text: #ffb4b4;
+	--color-skeleton-base: rgba(128, 151, 188, 0.16);
+	--color-skeleton-highlight: rgba(243, 247, 251, 0.12);
 }
 
 :root[data-theme='light'] {
@@ -54,6 +56,8 @@
 	--color-warning-text: #9a3412;
 	--color-danger-soft: rgba(220, 38, 38, 0.1);
 	--color-danger-text: #991b1b;
+	--color-skeleton-base: rgba(91, 102, 121, 0.12);
+	--color-skeleton-highlight: rgba(255, 255, 255, 0.72);
 	--shadow-soft: 0 18px 45px rgba(120, 100, 74, 0.12);
 	--shadow-card: 0 16px 34px rgba(120, 100, 74, 0.16);
 }

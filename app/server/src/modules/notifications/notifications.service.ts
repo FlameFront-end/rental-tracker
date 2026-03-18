@@ -9,9 +9,12 @@ import {
   addDaysToDateOnly,
 } from '../../common/utils/date.util';
 import { BookingEntity } from '../bookings/entities/booking.entity';
+import { UsersService } from '../users/users.service';
 import { DispatchNotificationsDto } from './dto/dispatch-notifications.dto';
+import { NotificationsPreferencesDto } from './dto/notifications-preferences.dto';
 import { NotificationsDispatchResultDto } from './dto/notifications-dispatch-result.dto';
 import { NotificationsStatusDto } from './dto/notifications-status.dto';
+import { UpdateNotificationsPreferencesDto } from './dto/update-notifications-preferences.dto';
 import { NotificationDeliveryEntity } from './entities/notification-delivery.entity';
 import { NotificationDeliveryStatus } from './enums/notification-delivery-status.enum';
 import { NotificationReminderType } from './enums/notification-reminder-type.enum';
@@ -38,6 +41,7 @@ export class NotificationsService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
     @InjectRepository(BookingEntity)
     private readonly bookingsRepository: Repository<BookingEntity>,
     @InjectRepository(NotificationDeliveryEntity)
@@ -69,6 +73,32 @@ export class NotificationsService {
       sentCount,
       failedCount,
     };
+  }
+
+  async getPreferences(userId: string): Promise<NotificationsPreferencesDto> {
+    const user = await this.usersService.findByIdOrFail(userId);
+
+    return this.mapPreferences(user);
+  }
+
+  async updatePreferences(
+    userId: string,
+    dto: UpdateNotificationsPreferencesDto,
+  ): Promise<NotificationsPreferencesDto> {
+    const user = await this.usersService.update(userId, {
+      ...(dto.reminderTodayEnabled !== undefined
+        ? {
+            notificationReminderTodayEnabled: dto.reminderTodayEnabled,
+          }
+        : {}),
+      ...(dto.reminderTomorrowEnabled !== undefined
+        ? {
+            notificationReminderTomorrowEnabled: dto.reminderTomorrowEnabled,
+          }
+        : {}),
+    });
+
+    return this.mapPreferences(user);
   }
 
   @Cron(TODAY_CRON, {
@@ -116,7 +146,11 @@ export class NotificationsService {
     },
   ): Promise<NotificationsDispatchResultDto> {
     const targetDate = this.getTargetDate(reminderType);
-    const dueBookings = await this.findDueBookings(targetDate, options?.userId);
+    const dueBookings = await this.findDueBookings(
+      targetDate,
+      reminderType,
+      options?.userId,
+    );
     const result: NotificationsDispatchResultDto = {
       reminderType,
       targetDate,
@@ -235,7 +269,11 @@ export class NotificationsService {
     return result;
   }
 
-  private async findDueBookings(targetDate: string, userId?: string) {
+  private async findDueBookings(
+    targetDate: string,
+    reminderType: NotificationReminderType,
+    userId?: string,
+  ) {
     const qb = this.bookingsRepository
       .createQueryBuilder('booking')
       .innerJoin('booking.asset', 'asset')
@@ -248,6 +286,12 @@ export class NotificationsService {
       .addSelect('user.telegramId', 'telegramChatId')
       .where('booking.endDate = :targetDate', { targetDate })
       .orderBy('booking.createdAt', 'ASC');
+
+    qb.andWhere(
+      reminderType === NotificationReminderType.TODAY
+        ? 'user.notificationReminderTodayEnabled = true'
+        : 'user.notificationReminderTomorrowEnabled = true',
+    );
 
     if (userId) {
       qb.andWhere('user.id = :userId', {
@@ -351,6 +395,16 @@ export class NotificationsService {
       `Client: ${booking.clientName}`,
       `End date: ${booking.endDate}`,
     ].join('\n');
+  }
+
+  private mapPreferences(user: {
+    notificationReminderTodayEnabled: boolean;
+    notificationReminderTomorrowEnabled: boolean;
+  }): NotificationsPreferencesDto {
+    return {
+      reminderTodayEnabled: user.notificationReminderTodayEnabled,
+      reminderTomorrowEnabled: user.notificationReminderTomorrowEnabled,
+    };
   }
 
   private formatDateOnlyValue(value: Date | string) {

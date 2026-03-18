@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import axiosInstance from '@/shared/api/axiosInstance'
+import type { PaginatedResponse } from '@/shared/api/paginated-response'
 import { invalidateBookingRelatedQueries } from '@/shared/api/cache-invalidation'
 
 export type BookingStatus = 'paid' | 'pending'
@@ -47,23 +48,64 @@ interface UpdateBookingStatusPayload {
 	status: BookingStatus
 }
 
-export const bookingsKeys = {
-	all: ['bookings'] as const,
-	list: (filters: BookingFilters = {}) => [...bookingsKeys.all, 'list', filters] as const
+interface BookingsListParams {
+	filters: BookingFilters
+	limit: number
+	page: number
 }
 
-const buildBookingsParams = (filters: BookingFilters = {}) => ({
+const DEFAULT_BOOKINGS_PAGE_LIMIT = 12
+
+export const bookingsKeys = {
+	all: ['bookings'] as const,
+	detail: (bookingId: string) => [...bookingsKeys.all, 'detail', bookingId] as const,
+	list: (filters: BookingFilters = {}, limit = DEFAULT_BOOKINGS_PAGE_LIMIT) =>
+		[...bookingsKeys.all, 'list', filters, { limit }] as const,
+	total: (filters: BookingFilters = {}) => [...bookingsKeys.all, 'total', filters] as const
+}
+
+const buildBookingsParams = ({
+	filters = {},
+	limit,
+	page
+}: Partial<BookingsListParams> & {
+	filters?: BookingFilters
+}) => ({
 	...(filters.assetId ? { assetId: filters.assetId } : {}),
 	...(filters.date ? { date: filters.date } : {}),
-	...(filters.status ? { status: filters.status } : {})
+	...(filters.status ? { status: filters.status } : {}),
+	...(limit ? { limit } : {}),
+	...(page ? { page } : {})
 })
 
-const getBookings = async (filters: BookingFilters = {}) => {
-	const { data } = await axiosInstance.get<Booking[]>('/bookings', {
-		params: buildBookingsParams(filters)
+const getBookings = async ({ filters, limit, page }: BookingsListParams) => {
+	const { data } = await axiosInstance.get<PaginatedResponse<Booking>>('/bookings', {
+		params: buildBookingsParams({
+			filters,
+			limit,
+			page
+		})
 	})
 
 	return data
+}
+
+const getBooking = async (bookingId: string) => {
+	const { data } = await axiosInstance.get<Booking>(`/bookings/${bookingId}`)
+
+	return data
+}
+
+const getBookingsTotal = async (filters: BookingFilters = {}) => {
+	const { data } = await axiosInstance.get<PaginatedResponse<Booking>>('/bookings', {
+		params: buildBookingsParams({
+			filters,
+			limit: 1,
+			page: 1
+		})
+	})
+
+	return data.total
 }
 
 const createBooking = async (payload: BookingFormValues) => {
@@ -101,10 +143,50 @@ const updateBookingStatus = async ({
 	return data
 }
 
-export const useBookingsQuery = (filters: BookingFilters = {}) => {
+export const useBookingsQuery = (
+	filters: BookingFilters = {},
+	limit = DEFAULT_BOOKINGS_PAGE_LIMIT
+) => {
+	const query = useInfiniteQuery({
+		queryKey: bookingsKeys.list(filters, limit),
+		initialPageParam: 1,
+		queryFn: ({ pageParam }) =>
+			getBookings({
+				filters,
+				limit,
+				page: Number(pageParam)
+			}),
+		getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined)
+	})
+	const pages = query.data?.pages ?? []
+	const items = pages.flatMap((page) => page.items)
+	const firstPage = pages[0]
+
+	return {
+		...query,
+		data: items,
+		hasMore: query.hasNextPage,
+		isFetchingMore: query.isFetchingNextPage,
+		loadedCount: items.length,
+		limit,
+		total: firstPage?.total ?? 0,
+		totalPages: firstPage?.totalPages ?? 0
+	}
+}
+
+export const useBookingQuery = (bookingId?: string | null, enabled = true) => {
 	return useQuery({
-		queryKey: bookingsKeys.list(filters),
-		queryFn: () => getBookings(filters)
+		queryKey: bookingsKeys.detail(bookingId ?? 'unknown'),
+		queryFn: () => getBooking(bookingId!),
+		enabled: Boolean(bookingId) && enabled
+	})
+}
+
+export const useBookingsTotalQuery = (filters: BookingFilters = {}, enabled = true) => {
+	return useQuery({
+		queryKey: bookingsKeys.total(filters),
+		queryFn: () => getBookingsTotal(filters),
+		enabled
 	})
 }
 

@@ -4,6 +4,7 @@ import { useEffect, type MouseEvent, type PropsWithChildren } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 
 import styles from './ScreenSheet.module.scss'
 
@@ -14,6 +15,8 @@ interface ScreenSheetProps extends PropsWithChildren {
 
 const ScreenSheet = ({ children, onClose, open }: ScreenSheetProps) => {
 	const { t } = useI18n()
+
+	useTelegramBackButton(open, onClose)
 
 	useEffect(() => {
 		if (!open) {

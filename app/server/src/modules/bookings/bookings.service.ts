@@ -11,6 +11,7 @@ import {
   assertDateRange,
   normalizeDateOnly,
 } from '../../common/utils/date.util';
+import { createPaginatedResponse } from '../../common/utils/pagination.util';
 import { AssetsService } from '../assets/assets.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
@@ -46,6 +47,8 @@ export class BookingsService {
   }
 
   async findAll(userId: string, query: ListBookingsQueryDto) {
+    const page = query.page;
+    const limit = query.limit;
     const qb = this.bookingsRepository
       .createQueryBuilder('booking')
       .innerJoin('booking.asset', 'asset')
@@ -74,7 +77,11 @@ export class BookingsService {
       );
     }
 
-    return qb.getMany();
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return createPaginatedResponse(items, page, limit, total);
   }
 
   async findOwnedBookingOrFail(userId: string, bookingId: string) {

@@ -1,65 +1,115 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useConfirm } from '@/app/confirm/use-confirm'
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
-import { useTelegramFormGuard } from '@/app/telegram/use-telegram-form-guard'
 import type { Asset, AssetFormValues } from '@/shared/api/services/assets'
 import {
+	useAssetQuery,
 	useAssetsQuery,
 	useCreateAssetMutation,
 	useDeleteAssetMutation,
 	useUpdateAssetMutation
 } from '@/shared/api/services/assets'
-import { Button } from '@/shared/kit'
+import { Button, Skeleton } from '@/shared/kit'
 import { getApiErrorMessage } from '@/shared/lib'
+import { ROUTES, ROUTE_QUERY_KEYS } from '@/shared/model'
 import { Layout, ScreenSheet } from '@/shared/widgets'
 
 import AssetCard from '@/features/assets/components/AssetCard'
+import AssetCardSkeleton from '@/features/assets/components/AssetCardSkeleton'
 import AssetFormCard from '@/features/assets/components/AssetFormCard'
 import AssetsEmptyState from '@/features/assets/components/AssetsEmptyState'
 
 import styles from './assets.module.scss'
 
+const ASSET_SKELETON_COUNT = 3
+
 const AssetsPage = () => {
+	const navigate = useNavigate()
 	const confirm = useConfirm()
 	const { t } = useI18n()
 	const { error: hapticError, success } = useTelegramHaptics()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const [isComposerOpen, setIsComposerOpen] = useState(false)
 	const [formResetVersion, setFormResetVersion] = useState(0)
-	const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
 	const [isComposerDirty, setIsComposerDirty] = useState(false)
 	const [formError, setFormError] = useState<string | null>(null)
 	const [listError, setListError] = useState<string | null>(null)
 	const {
 		data: assets = [],
 		error,
-		isLoading
+		fetchNextPage,
+		hasMore = false,
+		isFetchingMore,
+		isLoading,
+		total
 	} = useAssetsQuery()
 	const createAsset = useCreateAssetMutation()
 	const updateAsset = useUpdateAssetMutation()
 	const deleteAsset = useDeleteAssetMutation()
-	const selectedAsset = useMemo(
+	const selectedAssetId = searchParams.get(ROUTE_QUERY_KEYS.ASSET_ID)
+	const assetFromList = useMemo(
 		() => assets.find((asset) => asset.id === selectedAssetId),
 		[assets, selectedAssetId]
 	)
+	const {
+		data: selectedAssetDetail,
+		isLoading: isSelectedAssetLoading
+	} = useAssetQuery(selectedAssetId, Boolean(selectedAssetId && !assetFromList))
+	const selectedAsset = assetFromList ?? selectedAssetDetail
+	const totalAssets = total || assets.length
+	const isListLoading = isLoading && assets.length === 0
 	const isComposerVisible = isComposerOpen || Boolean(selectedAsset)
 
+	const updateSelectedAsset = useCallback((nextAssetId?: string | null) => {
+		const nextSearchParams = new URLSearchParams(searchParams)
+
+		if (nextAssetId) {
+			nextSearchParams.set(ROUTE_QUERY_KEYS.ASSET_ID, nextAssetId)
+		} else {
+			nextSearchParams.delete(ROUTE_QUERY_KEYS.ASSET_ID)
+		}
+
+		setSearchParams(nextSearchParams, {
+			replace: true
+		})
+	}, [searchParams, setSearchParams])
+
+	useEffect(() => {
+		if (!selectedAssetId || isListLoading || isSelectedAssetLoading || selectedAsset) {
+			return
+		}
+
+		updateSelectedAsset(null)
+	}, [isListLoading, isSelectedAssetLoading, selectedAsset, selectedAssetId, updateSelectedAsset])
+
+	const handleLoadMore = useCallback(() => {
+		if (!hasMore || isFetchingMore) {
+			return
+		}
+
+		void fetchNextPage()
+	}, [fetchNextPage, hasMore, isFetchingMore])
+
 	const handleStartCreate = useCallback(() => {
-		setSelectedAssetId(null)
+		updateSelectedAsset(null)
 		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
 		setIsComposerOpen(true)
 		setFormResetVersion((current) => current + 1)
-	}, [])
+	}, [updateSelectedAsset])
 
 	const handleEdit = (asset: Asset) => {
-		setSelectedAssetId(asset.id)
+		updateSelectedAsset(asset.id)
 		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
-		setIsComposerOpen(true)
+		setIsComposerOpen(false)
 	}
 
 	const handleCloseComposer = useCallback(async () => {
@@ -77,16 +127,15 @@ const AssetsPage = () => {
 			}
 		}
 
-		setSelectedAssetId(null)
+		updateSelectedAsset(null)
 		setIsComposerDirty(false)
 		setFormError(null)
 		setIsComposerOpen(false)
 		setFormResetVersion((current) => current + 1)
-	}, [confirm, isComposerDirty, t])
+	}, [confirm, isComposerDirty, t, updateSelectedAsset])
 
-	useTelegramFormGuard({
-		active: isComposerVisible,
-		isDirty: isComposerDirty
+	useTelegramBackButton(!isComposerVisible, () => {
+		navigate(ROUTES.DASHBOARD)
 	})
 
 	const handleSubmit = async (values: AssetFormValues) => {
@@ -102,7 +151,7 @@ const AssetsPage = () => {
 				await createAsset.mutateAsync(values)
 			}
 
-			setSelectedAssetId(null)
+			updateSelectedAsset(null)
 			setIsComposerDirty(false)
 			setIsComposerOpen(false)
 			setFormResetVersion((current) => current + 1)
@@ -136,7 +185,7 @@ const AssetsPage = () => {
 			await deleteAsset.mutateAsync(asset.id)
 
 			if (selectedAssetId === asset.id) {
-				setSelectedAssetId(null)
+				updateSelectedAsset(null)
 				setIsComposerOpen(false)
 				setFormResetVersion((current) => current + 1)
 			}
@@ -161,7 +210,13 @@ const AssetsPage = () => {
 				<section className={styles.summaryBar}>
 					<div className={styles.metric}>
 						<span>{t('assets.totalBikes')}</span>
-						<strong>{assets.length}</strong>
+						<strong>
+							{isListLoading ? (
+								<Skeleton className={styles.metricValueSkeleton} />
+							) : (
+								totalAssets
+							)}
+						</strong>
 					</div>
 					<Button type='button' onClick={handleStartCreate}>
 						{t('assets.newBike')}
@@ -172,11 +227,18 @@ const AssetsPage = () => {
 					<div className={styles.listHeader}>
 						<div>
 							<h2 className={styles.sectionTitle}>{t('assets.fleetList')}</h2>
-							<p className={styles.sectionDescription}>
-								{assets.length === 0
-									? t('assets.noBikesYet')
-									: t('assets.bikesAvailable', { count: assets.length })}
-							</p>
+							{isListLoading ? (
+								<div className={styles.sectionDescriptionSkeletons}>
+									<Skeleton className={styles.sectionDescriptionSkeleton} />
+									<Skeleton className={styles.sectionDescriptionSkeletonShort} />
+								</div>
+							) : (
+								<p className={styles.sectionDescription}>
+									{totalAssets === 0
+										? t('assets.noBikesYet')
+										: t('assets.bikesAvailable', { count: totalAssets })}
+								</p>
+							)}
 						</div>
 					</div>
 
@@ -186,22 +248,38 @@ const AssetsPage = () => {
 							{getApiErrorMessage(error, t('assets.errorLoad'))}
 						</p>
 					) : null}
-					{isLoading ? <div className={styles.loading}>{t('assets.loading')}</div> : null}
-					{!isLoading && assets.length === 0 ? (
+					{!error && !isListLoading && totalAssets === 0 ? (
 						<AssetsEmptyState onCreate={handleStartCreate} />
 					) : null}
 					<div className={styles.assetList}>
-						{assets.map((asset) => (
-							<AssetCard
-								key={asset.id}
-								asset={asset}
-								isEditing={selectedAssetId === asset.id}
-								isDeleting={deleteAsset.isPending && deleteAsset.variables === asset.id}
-								onEdit={handleEdit}
-								onDelete={handleDelete}
-							/>
-						))}
+						{isListLoading
+							? Array.from({ length: ASSET_SKELETON_COUNT }).map((_, index) => (
+									<AssetCardSkeleton key={index} />
+								))
+							: assets.map((asset) => (
+									<AssetCard
+										key={asset.id}
+										asset={asset}
+										isEditing={selectedAssetId === asset.id}
+										isDeleting={deleteAsset.isPending && deleteAsset.variables === asset.id}
+										onEdit={handleEdit}
+										onDelete={handleDelete}
+									/>
+								))}
 					</div>
+					{!isListLoading && hasMore ? (
+						<div className={styles.paginationActions}>
+							<Button
+								type='button'
+								variant='secondary'
+								className={styles.loadMoreButton}
+								disabled={isFetchingMore}
+								onClick={handleLoadMore}
+							>
+								{isFetchingMore ? t('common.loadingMore') : t('assets.loadMore')}
+							</Button>
+						</div>
+					) : null}
 				</section>
 
 				<ScreenSheet open={isComposerVisible} onClose={handleCloseComposer}>

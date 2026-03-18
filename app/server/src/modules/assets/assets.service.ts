@@ -8,9 +8,11 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 
 import { isPostgresError } from '../../common/utils/database-error.util';
 import { getCurrentDateOnly } from '../../common/utils/date.util';
+import { createPaginatedResponse } from '../../common/utils/pagination.util';
 import { BookingEntity } from '../bookings/entities/booking.entity';
 import { UsersService } from '../users/users.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
+import { ListAssetsQueryDto } from './dto/list-assets-query.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AssetEntity } from './entities/asset.entity';
 
@@ -35,7 +37,22 @@ export class AssetsService {
     return this.assetsRepository.save(asset);
   }
 
-  findAll(userId: string) {
+  async findAll(userId: string, query: ListAssetsQueryDto) {
+    const [items, total] = await this.assetsRepository.findAndCount({
+      where: {
+        userId,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+    });
+
+    return createPaginatedResponse(items, query.page, query.limit, total);
+  }
+
+  findCatalog(userId: string) {
     return this.assetsRepository.find({
       where: {
         userId,

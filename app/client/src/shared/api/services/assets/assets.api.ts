@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import axiosInstance from '@/shared/api/axiosInstance'
+import type { PaginatedResponse } from '@/shared/api/paginated-response'
 import { invalidateAssetRelatedQueries } from '@/shared/api/cache-invalidation'
 
 export interface Asset {
@@ -15,13 +16,39 @@ export interface AssetFormValues {
 	name: string
 }
 
-export const assetsKeys = {
-	all: ['assets'] as const,
-	list: () => [...assetsKeys.all, 'list'] as const
+interface AssetsListParams {
+	limit: number
+	page: number
 }
 
-const getAssets = async () => {
-	const { data } = await axiosInstance.get<Asset[]>('/assets')
+const DEFAULT_ASSETS_PAGE_LIMIT = 12
+
+export const assetsKeys = {
+	all: ['assets'] as const,
+	catalog: () => [...assetsKeys.all, 'catalog'] as const,
+	detail: (assetId: string) => [...assetsKeys.all, 'detail', assetId] as const,
+	list: (limit = DEFAULT_ASSETS_PAGE_LIMIT) => [...assetsKeys.all, 'list', { limit }] as const
+}
+
+const getAssets = async ({ limit, page }: AssetsListParams) => {
+	const { data } = await axiosInstance.get<PaginatedResponse<Asset>>('/assets', {
+		params: {
+			limit,
+			page
+		}
+	})
+
+	return data
+}
+
+const getAssetsCatalog = async () => {
+	const { data } = await axiosInstance.get<Asset[]>('/assets/catalog')
+
+	return data
+}
+
+const getAsset = async (assetId: string) => {
+	const { data } = await axiosInstance.get<Asset>(`/assets/${assetId}`)
 
 	return data
 }
@@ -48,10 +75,45 @@ const deleteAsset = async (assetId: string) => {
 	await axiosInstance.delete(`/assets/${assetId}`)
 }
 
-export const useAssetsQuery = () => {
+export const useAssetsQuery = (limit = DEFAULT_ASSETS_PAGE_LIMIT) => {
+	const query = useInfiniteQuery({
+		queryKey: assetsKeys.list(limit),
+		initialPageParam: 1,
+		queryFn: ({ pageParam }) =>
+			getAssets({
+				limit,
+				page: Number(pageParam)
+			}),
+		getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined)
+	})
+	const pages = query.data?.pages ?? []
+	const items = pages.flatMap((page) => page.items)
+	const firstPage = pages[0]
+
+	return {
+		...query,
+		data: items,
+		hasMore: query.hasNextPage,
+		isFetchingMore: query.isFetchingNextPage,
+		loadedCount: items.length,
+		limit,
+		total: firstPage?.total ?? 0,
+		totalPages: firstPage?.totalPages ?? 0
+	}
+}
+
+export const useAssetsCatalogQuery = () => {
 	return useQuery({
-		queryKey: assetsKeys.list(),
-		queryFn: getAssets
+		queryKey: assetsKeys.catalog(),
+		queryFn: getAssetsCatalog
+	})
+}
+
+export const useAssetQuery = (assetId?: string | null, enabled = true) => {
+	return useQuery({
+		queryKey: assetsKeys.detail(assetId ?? 'unknown'),
+		queryFn: () => getAsset(assetId!),
+		enabled: Boolean(assetId) && enabled
 	})
 }
 

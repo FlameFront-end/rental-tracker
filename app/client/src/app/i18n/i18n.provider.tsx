@@ -1,6 +1,7 @@
 import {
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 	type PropsWithChildren
 } from 'react'
@@ -17,11 +18,14 @@ import {
 	type I18nContextValue,
 	type TranslationParams
 } from './i18n.context'
+import {
+	getStoredLocale,
+	hydrateStoredLocaleIfMissing,
+	persistLocale
+} from '@/app/telegram/app-storage'
 import { enTranslations } from './translations.en'
 import { idTranslations } from './translations.id'
 import { ruTranslations } from './translations.ru'
-
-const LOCALE_STORAGE_KEY = 'rental-tracker-locale'
 
 const translations = {
 	en: enTranslations,
@@ -45,10 +49,7 @@ const getInitialLocale = (): AppLocale => {
 		return DEFAULT_LOCALE
 	}
 
-	const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY)
-	const locale = APP_LOCALES.includes(storedLocale as AppLocale)
-		? (storedLocale as AppLocale)
-		: DEFAULT_LOCALE
+	const locale = getStoredLocale()
 
 	setFormattingLocale(locale)
 
@@ -57,12 +58,21 @@ const getInitialLocale = (): AppLocale => {
 
 export const I18nProvider = ({ children }: PropsWithChildren) => {
 	const [locale, setLocale] = useState<AppLocale>(getInitialLocale)
+	const initialLocaleRef = useRef(locale)
 
 	setFormattingLocale(locale)
 
 	useEffect(() => {
-		window.localStorage.setItem(LOCALE_STORAGE_KEY, locale)
+		persistLocale(locale)
 	}, [locale])
+
+	useEffect(() => {
+		void hydrateStoredLocaleIfMissing((storedLocale) => {
+			setLocale((currentLocale) =>
+				currentLocale === initialLocaleRef.current ? storedLocale : currentLocale
+			)
+		})
+	}, [])
 
 	const value = useMemo<I18nContextValue>(() => {
 		const t = (key: string, params?: TranslationParams) => {

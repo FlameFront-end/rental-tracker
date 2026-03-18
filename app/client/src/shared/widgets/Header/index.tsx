@@ -1,8 +1,8 @@
-import { Check, Languages, MoonStar, SunMedium } from 'lucide-react'
+import { Check, Languages, MoonStar, Settings, SunMedium } from 'lucide-react'
 
 import { useMemo, useState } from 'react'
 
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useAuthSession } from '@/app/session/use-auth-session'
@@ -20,6 +20,7 @@ import styles from './Header.module.scss'
 
 const Header = () => {
 	const location = useLocation()
+	const navigate = useNavigate()
 	const { isTelegramEnvironment, profile, status, user } = useAuthSession()
 	const { locale, setLocale, t } = useI18n()
 	const { theme, toggleTheme } = useTheme()
@@ -27,6 +28,7 @@ const Header = () => {
 	const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false)
 	const isWorkspaceRoute =
 		status === 'authenticated' && location.pathname !== ROUTES.AUTH
+	const isSettingsRoute = location.pathname === ROUTES.SETTINGS
 	const displayName =
 		profile?.displayName ??
 		(isWorkspaceRoute
@@ -69,6 +71,22 @@ const Header = () => {
 					</div>
 
 					<div className={styles.actions}>
+						{isWorkspaceRoute ? (
+							<button
+								type='button'
+								className={styles.control}
+								onClick={() => {
+									if (!isSettingsRoute) {
+										selectionChanged()
+										navigate(ROUTES.SETTINGS)
+									}
+								}}
+								aria-label={t('header.openSettings')}
+								title={t('header.openSettings')}
+							>
+								<Settings size={18} strokeWidth={1.9} aria-hidden='true' />
+							</button>
+						) : null}
 						<button
 							type='button'
 							className={styles.control}

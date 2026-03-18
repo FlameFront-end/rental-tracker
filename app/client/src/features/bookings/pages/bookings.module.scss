@@ -45,9 +45,29 @@
 	line-height: 1;
 }
 
+.metricValueSkeleton {
+	width: 4.25rem;
+	height: 1.35rem;
+}
+
 .filterGrid {
 	display: grid;
 	gap: 0.75rem;
+}
+
+.filterSkeleton {
+	display: grid;
+	gap: 0.45rem;
+}
+
+.filterSkeletonLabel {
+	width: 5rem;
+	height: 0.82rem;
+}
+
+.filterSkeletonField {
+	height: 3.35rem;
+	border-radius: 1.05rem;
 }
 
 .listHeader {
@@ -71,9 +91,37 @@
 	line-height: 1.4;
 }
 
+.sectionDescriptionSkeletons {
+	display: grid;
+	gap: 0.35rem;
+	margin-top: 0.3rem;
+}
+
+.sectionDescriptionSkeleton,
+.sectionDescriptionSkeletonShort {
+	height: 0.88rem;
+}
+
+.sectionDescriptionSkeleton {
+	width: min(18rem, 100%);
+}
+
+.sectionDescriptionSkeletonShort {
+	width: min(11rem, 72%);
+}
+
 .bookingList {
 	display: grid;
 	gap: 0.7rem;
+}
+
+.paginationActions {
+	display: flex;
+	justify-content: center;
+}
+
+.loadMoreButton {
+	width: 100%;
 }
 
 .focusedBookingItem {
@@ -127,5 +175,9 @@
 	.summaryBar {
 		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: center;
+	}
+
+	.loadMoreButton {
+		width: auto;
 	}
 }

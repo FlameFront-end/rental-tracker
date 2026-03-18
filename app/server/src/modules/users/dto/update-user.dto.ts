@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, Matches } from 'class-validator';
+import { IsBoolean, IsOptional, Matches } from 'class-validator';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({
@@ -10,4 +10,18 @@ export class UpdateUserDto {
     message: 'telegramId must contain only digits.',
   })
   telegramId?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  notificationReminderTodayEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  notificationReminderTomorrowEnabled?: boolean;
 }

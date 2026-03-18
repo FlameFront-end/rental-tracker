@@ -1,5 +1,7 @@
 export {
 	assetsKeys,
+	useAssetQuery,
+	useAssetsCatalogQuery,
 	useAssetsQuery,
 	useCreateAssetMutation,
 	useDeleteAssetMutation,

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useAuthSession } from '@/app/session/use-auth-session'
+import { getStoredLastRoute } from '@/app/telegram/app-storage'
+import { getSafeRedirectTarget, getStartAppTarget } from '@/app/telegram/startapp'
 import AuthStateCard from '@/features/auth/components/AuthStateCard'
 import { ROUTES } from '@/shared/model'
 import { Layout } from '@/shared/widgets'
@@ -12,6 +14,7 @@ import styles from './auth.module.scss'
 
 const AuthPage = () => {
 	const { t } = useI18n()
+	const location = useLocation()
 	const {
 		canUseDevelopmentLogin,
 		error,
@@ -23,7 +26,17 @@ const AuthPage = () => {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	if (status === 'authenticated') {
-		return <Navigate to={ROUTES.DASHBOARD} replace />
+		return (
+			<Navigate
+				to={
+					getSafeRedirectTarget(location.state?.from) ??
+					getStartAppTarget() ??
+					getStoredLastRoute() ??
+					ROUTES.DASHBOARD
+				}
+				replace
+			/>
+		)
 	}
 
 	const handleDevLogin = async () => {

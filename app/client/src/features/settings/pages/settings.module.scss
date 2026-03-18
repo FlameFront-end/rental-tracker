@@ -1,0 +1,227 @@
+.page {
+	display: grid;
+	gap: 0.85rem;
+}
+
+.sectionCard {
+	display: grid;
+	gap: 1rem;
+	padding: 0.9rem;
+	border: 1px solid var(--color-border);
+	border-radius: 1.15rem;
+	background:
+		linear-gradient(160deg, var(--color-surface-strong), var(--color-surface)),
+		var(--color-surface);
+	box-shadow: var(--shadow-card);
+}
+
+.sectionHeader {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.eyebrow {
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-accent);
+}
+
+.sectionTitle {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: 1.2rem;
+	line-height: 1.08;
+	letter-spacing: -0.03em;
+}
+
+.sectionDescription,
+.hint {
+	margin: 0;
+	color: var(--color-text-muted);
+	font-size: 0.9rem;
+	line-height: 1.45;
+}
+
+.preferencesList {
+	display: grid;
+	gap: 0.7rem;
+}
+
+.optionList {
+	display: grid;
+	gap: 0.7rem;
+}
+
+.primaryAction {
+	display: flex;
+}
+
+.optionCard,
+.preferenceRow,
+.preferenceSkeleton {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 0.85rem 0.9rem;
+	border: 1px solid var(--color-border);
+	border-radius: 1rem;
+	background: color-mix(in srgb, var(--color-surface-muted) 92%, transparent);
+}
+
+.optionCard {
+	cursor: pointer;
+	text-align: left;
+}
+
+.preferenceRow {
+	position: relative;
+	cursor: pointer;
+}
+
+.optionCardActive {
+	border-color: color-mix(in srgb, var(--color-accent) 48%, var(--color-border));
+	background:
+		linear-gradient(
+			160deg,
+			color-mix(in srgb, var(--color-accent-soft) 72%, var(--color-surface-strong)),
+			var(--color-surface)
+		),
+		var(--color-surface);
+}
+
+.optionLead {
+	display: flex;
+	align-items: center;
+	gap: 0.8rem;
+	min-width: 0;
+}
+
+.optionCode,
+.optionIcon,
+.optionCheck {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.optionCode,
+.optionIcon {
+	width: 2.35rem;
+	height: 2.35rem;
+	border-radius: 0.85rem;
+	background: color-mix(in srgb, var(--color-surface-strong) 88%, transparent);
+}
+
+.optionCode {
+	font-size: 0.82rem;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+}
+
+.optionIcon {
+	color: var(--color-text);
+}
+
+.preferenceCopy {
+	display: grid;
+	gap: 0.18rem;
+}
+
+.optionCopy {
+	display: grid;
+	gap: 0.15rem;
+	min-width: 0;
+}
+
+.optionCopy strong,
+.preferenceCopy strong {
+	font-size: 0.95rem;
+	line-height: 1.2;
+}
+
+.optionCopy span,
+.preferenceCopy span {
+	color: var(--color-text-muted);
+	font-size: 0.84rem;
+	line-height: 1.4;
+}
+
+.optionCheck {
+	width: 1.5rem;
+	height: 1.5rem;
+	color: var(--color-accent);
+}
+
+.preferenceInput {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.preferenceToggle {
+	position: relative;
+	display: inline-flex;
+	width: 3rem;
+	height: 1.8rem;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--color-text-muted) 20%, var(--color-surface-strong));
+	transition: background-color 0.18s ease;
+}
+
+.preferenceToggle::after {
+	content: '';
+	position: absolute;
+	top: 0.18rem;
+	left: 0.18rem;
+	width: 1.44rem;
+	height: 1.44rem;
+	border-radius: 50%;
+	background: var(--color-surface);
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+	transition: transform 0.18s ease;
+}
+
+.preferenceInput:checked + .preferenceToggle {
+	background: color-mix(in srgb, var(--color-accent) 65%, var(--color-surface-strong));
+}
+
+.preferenceInput:checked + .preferenceToggle::after {
+	transform: translateX(1.2rem);
+}
+
+.preferenceInput:focus-visible + .preferenceToggle {
+	outline: none;
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+
+.preferenceInput:disabled + .preferenceToggle {
+	opacity: 0.55;
+}
+
+.preferenceTitleSkeleton {
+	width: 8rem;
+	height: 1rem;
+}
+
+.preferenceCopySkeleton {
+	width: min(16rem, 100%);
+	height: 0.85rem;
+}
+
+.error {
+	padding: 0.85rem 0.9rem;
+	border-radius: 0.95rem;
+	background: var(--color-danger-soft);
+	color: var(--color-danger-text);
+	font-weight: 600;
+}
+
+@media (min-width: 900px) {
+	.sectionCard {
+		padding: 1rem;
+	}
+}

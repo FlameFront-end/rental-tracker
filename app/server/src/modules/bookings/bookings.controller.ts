@@ -27,6 +27,7 @@ import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
 import { ListBookingsQueryDto } from './dto/list-bookings-query.dto';
+import { PaginatedBookingsDto } from './dto/paginated-bookings.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { BookingEntity } from './entities/booking.entity';
@@ -48,8 +49,7 @@ export class BookingsController {
 
   @Get()
   @ApiOkResponse({
-    type: BookingEntity,
-    isArray: true,
+    type: PaginatedBookingsDto,
   })
   findAll(
     @CurrentUser() user: RequestUser,

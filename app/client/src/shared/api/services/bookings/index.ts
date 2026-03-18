@@ -1,6 +1,8 @@
 export {
+	useBookingQuery,
 	bookingsKeys,
 	useBookingsQuery,
+	useBookingsTotalQuery,
 	useCreateBookingMutation,
 	useDeleteBookingMutation,
 	useExtendBookingMutation,
