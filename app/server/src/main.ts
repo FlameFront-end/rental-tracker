@@ -13,10 +13,7 @@ async function bootstrap() {
   const host = 'http://localhost';
 
   app.setGlobalPrefix('api');
-  app.enableCors({
-    origin: true,
-    credentials: true,
-  });
+  app.enableCors();
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
