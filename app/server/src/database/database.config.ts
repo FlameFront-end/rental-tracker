@@ -21,17 +21,24 @@ export const databaseMigrations = [
 ];
 
 export function buildDataSourceOptions(): DataSourceOptions {
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+  const isSslEnabled = (process.env.DB_SSL ?? 'false') === 'true';
+
   return {
     type: 'postgres',
-    host: process.env.DB_HOST ?? 'localhost',
-    port: Number(process.env.DB_PORT ?? 5432),
-    username: process.env.DB_USERNAME ?? 'postgres',
-    password: process.env.DB_PASSWORD ?? 'postgres',
-    database: process.env.DB_NAME ?? 'rental_tracker',
+    url: databaseUrl || undefined,
+    host: databaseUrl ? undefined : (process.env.DB_HOST ?? 'localhost'),
+    port: databaseUrl ? undefined : Number(process.env.DB_PORT ?? 5432),
+    username: databaseUrl ? undefined : (process.env.DB_USERNAME ?? 'postgres'),
+    password: databaseUrl ? undefined : (process.env.DB_PASSWORD ?? 'postgres'),
+    database: databaseUrl
+      ? undefined
+      : (process.env.DB_NAME ?? 'rental_tracker'),
     entities: databaseEntities,
     migrations: databaseMigrations,
     migrationsTableName: 'typeorm_migrations',
     synchronize: false,
     logging: (process.env.NODE_ENV ?? 'development') === 'development',
+    ssl: isSslEnabled ? { rejectUnauthorized: false } : undefined,
   };
 }

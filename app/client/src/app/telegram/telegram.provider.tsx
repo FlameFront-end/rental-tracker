@@ -154,5 +154,20 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 		}
 	}, [isTelegramEnvironment, status])
 
+	useEffect(() => {
+		if (!isTelegramEnvironment || !isFullscreen) {
+			return
+		}
+
+		const isCompactViewport = window.matchMedia('(max-width: 899px)').matches
+
+		if (isCompactViewport) {
+			return
+		}
+
+		void viewport.exitFullscreen().catch(() => undefined)
+		isFullscreenRequestedRef.current = false
+	}, [isFullscreen, isTelegramEnvironment])
+
 	return children
 }
