@@ -32,6 +32,15 @@
 	}
 }
 
+@media (max-width: 640px) {
+	.button,
+	.buttonSecondary {
+		min-height: 2.6rem;
+		padding: 0.74rem 0.92rem;
+		border-radius: 0.9rem;
+	}
+}
+
 .button {
 	background: linear-gradient(
 		135deg,

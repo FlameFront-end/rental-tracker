@@ -247,6 +247,12 @@
 	.actions {
 		grid-template-columns: 1fr;
 	}
+
+	.action {
+		min-height: 2.6rem;
+		padding: 0.74rem 0.92rem;
+		border-radius: 0.9rem;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

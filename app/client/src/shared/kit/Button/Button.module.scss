@@ -93,3 +93,22 @@
 .md {
 	font-size: 0.95rem;
 }
+
+@media (max-width: 640px) {
+	.button {
+		gap: 0.45rem;
+		min-height: 2.6rem;
+		padding: 0.74rem 0.92rem;
+		border-radius: 0.9rem;
+	}
+
+	.sm {
+		min-height: 2.4rem;
+		padding: 0.58rem 0.78rem;
+		font-size: 0.84rem;
+	}
+
+	.md {
+		font-size: 0.9rem;
+	}
+}

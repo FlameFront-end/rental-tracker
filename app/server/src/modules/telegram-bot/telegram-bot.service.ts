@@ -1,20 +1,26 @@
 import {
   Injectable,
   Logger,
+  OnApplicationBootstrap,
   OnModuleDestroy,
-  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Context, Markup, Telegraf } from 'telegraf';
 
 @Injectable()
-export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
+export class TelegramBotService
+  implements OnApplicationBootstrap, OnModuleDestroy
+{
   private readonly logger = new Logger(TelegramBotService.name);
   private bot: Telegraf<Context> | null = null;
 
   constructor(private readonly configService: ConfigService) {}
 
-  async onModuleInit() {
+  onApplicationBootstrap() {
+    void this.startBot();
+  }
+
+  private async startBot() {
     const botToken = this.getBotToken();
 
     if (!botToken) {
@@ -46,11 +52,30 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
     this.bot = bot;
 
-    await Promise.allSettled([
+    const startupResults = await Promise.allSettled([
       bot.launch(),
       this.setMyCommands(bot),
       this.setChatMenuButton(bot),
     ]);
+
+    const rejectedResults = startupResults.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+
+    if (rejectedResults.length > 0) {
+      for (const result of rejectedResults) {
+        const message =
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason);
+
+        this.logger.warn(`Telegram bot startup issue: ${message}`);
+      }
+
+      return;
+    }
+
+    this.logger.log('Telegram bot is running in polling mode.');
   }
 
   onModuleDestroy() {

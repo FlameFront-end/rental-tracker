@@ -10,6 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);
+  const host = 'http://localhost';
 
   app.setGlobalPrefix('api');
   app.enableCors({
@@ -49,6 +50,22 @@ async function bootstrap() {
   });
 
   await app.listen(port);
+
+  const serverUrl = `${host}:${port}`;
+  const apiUrl = `${serverUrl}/api`;
+  const healthUrl = `${apiUrl}/health`;
+  const docsUrl = `${apiUrl}/docs`;
+
+  console.log(`
+========================================
+Rental Tracker API is ready
+Server: ${serverUrl}
+API:    ${apiUrl}
+Health: ${healthUrl}
+Docs:   ${docsUrl}
+CORS:   enabled for all origins
+========================================
+`);
 }
 
 void bootstrap();

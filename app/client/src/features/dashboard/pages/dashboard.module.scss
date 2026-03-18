@@ -73,7 +73,7 @@
 .sectionCard {
 	display: grid;
 	grid-template-rows: auto auto;
-	gap: 0.9rem;
+	gap: 0.62rem;
 	align-self: start;
 	min-width: 0;
 	padding: 0.82rem;
@@ -85,7 +85,7 @@
 	align-items: flex-start;
 	justify-content: space-between;
 	gap: 0.75rem;
-	min-height: 2.4rem;
+	min-height: 0;
 }
 
 .sectionTitle {

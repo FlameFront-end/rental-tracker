@@ -26,6 +26,12 @@
 	gap: 0.8rem;
 }
 
+.emptyState {
+	display: grid;
+	gap: 0.85rem;
+	align-content: start;
+}
+
 .rangeGroup {
 	display: grid;
 	gap: 0.18rem;
@@ -117,11 +123,16 @@
 	line-height: 1.4;
 }
 
+.emptyDescription {
+	margin: 0;
+}
+
 .rowLink,
 .ctaLink {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	width: fit-content;
 	min-height: 2.4rem;
 	padding: 0.45rem 0.8rem;
 	border-radius: 0.9rem;
