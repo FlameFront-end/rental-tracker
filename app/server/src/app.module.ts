@@ -13,6 +13,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { TelegramBotModule } from './modules/telegram-bot/telegram-bot.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { UsersModule } from './modules/users/users.module';
     BookingsModule,
     DashboardModule,
     NotificationsModule,
+    TelegramBotModule,
     HealthModule,
   ],
   controllers: [AppController],
