@@ -15,20 +15,7 @@
 - навигация станет привычнее для Telegram
 - можно убрать часть визуального шума в хедере и модалках
 
-## 2. Safe Area + Bottom Bar Integration
-
-Нормально связать layout приложения с Telegram viewport.
-
-Что внедрить:
-- safe area offsets для fixed navigation и sheet
-- корректные нижние отступы
-- синхронизацию цветов Telegram bars с темой приложения
-
-Зачем:
-- элементы не будут конфликтовать с системными зонами
-- интерфейс станет аккуратнее на разных устройствах
-
-## 3. Write Access для напоминаний
+## 2. Write Access для напоминаний
 
 Сделать нормальный onboarding для Telegram-уведомлений.
 
@@ -40,7 +27,7 @@
 Зачем:
 - пользователю будет понятнее, почему уведомления работают или не работают
 
-## 4. Settings Button
+## 3. Settings Button
 
 Использовать Telegram Settings Button для вторичных настроек.
 
@@ -53,7 +40,7 @@
 - можно разгрузить header
 - интерфейс станет проще
 
-## 5. Cloud Storage / Device Storage
+## 4. Cloud Storage / Device Storage
 
 Сохранять мелкое состояние ближе к Telegram-сценарию.
 
@@ -66,7 +53,7 @@
 Зачем:
 - после повторного открытия Mini App пользователь возвращается в знакомое состояние
 
-## 6. Deep Links / startapp
+## 5. Deep Links / startapp
 
 Добавить прямые входы в нужный экран или сущность.
 
@@ -83,16 +70,14 @@
 Если делать поэтапно, порядок такой:
 
 1. Back Button
-2. Safe Area + Bottom Bar Integration
-3. Write Access для напоминаний
-4. Deep Links / startapp
-5. Settings Button
-6. Cloud Storage / Device Storage
+2. Write Access для напоминаний
+3. Deep Links / startapp
+4. Settings Button
+5. Cloud Storage / Device Storage
 
 ## Практический минимум
 
 Если брать только самый полезный минимум на ближайший этап, то внедрить:
 
 1. Back Button
-2. Safe Area integration
-3. Write Access
+2. Write Access

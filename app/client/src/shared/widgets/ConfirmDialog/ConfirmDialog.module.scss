@@ -5,7 +5,10 @@
 	display: flex;
 	align-items: flex-end;
 	justify-content: center;
-	padding: 1rem;
+	padding:
+		calc(1rem + var(--app-safe-top))
+		1rem
+		calc(1rem + var(--app-safe-bottom));
 	background: rgba(4, 10, 20, 0.56);
 	backdrop-filter: blur(10px);
 	animation: confirm-fade-in 0.2s ease-out;
@@ -81,7 +84,10 @@
 @media (min-width: 720px) {
 	.backdrop {
 		align-items: center;
-		padding: 1.5rem;
+		padding:
+			calc(1.5rem + var(--app-safe-top))
+			1.5rem
+			calc(1.5rem + var(--app-safe-bottom));
 	}
 
 	.dialog {

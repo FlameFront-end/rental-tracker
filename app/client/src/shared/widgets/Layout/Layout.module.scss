@@ -1,11 +1,9 @@
 .shell {
 	min-height: var(--tg-viewport-stable-height, 100vh);
 	padding:
-		calc(0.55rem + var(--app-telegram-safe-top, 0px) + var(--app-telegram-top-chrome, 0px))
+		calc(0.55rem + var(--app-safe-top) + var(--app-telegram-top-chrome, 0px))
 		0.6rem
-		calc(
-			6.4rem + max(env(safe-area-inset-bottom, 0px), var(--app-telegram-safe-bottom, 0px))
-		);
+		calc(6.4rem + var(--app-safe-bottom));
 	position: relative;
 	overflow: clip;
 }
@@ -52,9 +50,9 @@
 @media (min-width: 900px) {
 	.shell {
 		padding:
-			calc(0.9rem + var(--app-telegram-safe-top, 0px) + var(--app-telegram-top-chrome, 0px))
+			calc(0.9rem + var(--app-safe-top) + var(--app-telegram-top-chrome, 0px))
 			1.25rem
-			calc(1.25rem + max(env(safe-area-inset-bottom, 0px), var(--app-telegram-safe-bottom, 0px)));
+			calc(1.25rem + var(--app-safe-bottom));
 	}
 
 	.container {

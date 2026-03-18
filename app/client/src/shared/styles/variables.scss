@@ -4,6 +4,11 @@
 	--shadow-soft: 0 20px 60px rgba(2, 6, 23, 0.18);
 	--shadow-card: 0 18px 40px rgba(2, 6, 23, 0.22);
 	--page-max-width: 1180px;
+	--app-telegram-safe-top: 0px;
+	--app-telegram-safe-bottom: 0px;
+	--app-telegram-top-chrome: 0px;
+	--app-safe-top: max(env(safe-area-inset-top, 0px), var(--app-telegram-safe-top));
+	--app-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--app-telegram-safe-bottom));
 }
 
 :root,

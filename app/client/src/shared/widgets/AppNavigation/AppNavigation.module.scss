@@ -4,7 +4,7 @@
 	position: fixed;
 	left: 0.55rem;
 	right: 0.55rem;
-	bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
+	bottom: calc(0.55rem + var(--app-safe-bottom));
 	z-index: 30;
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -78,7 +78,7 @@
 	.navigation {
 		left: 50%;
 		right: auto;
-		bottom: 1.1rem;
+		bottom: calc(1.1rem + var(--app-safe-bottom));
 		width: min(calc(100vw - 3rem), 34rem);
 		margin-bottom: 0;
 		padding: var(--nav-padding);
