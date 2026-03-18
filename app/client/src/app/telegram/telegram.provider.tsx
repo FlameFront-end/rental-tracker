@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PropsWithChildren } from 'react'
+import { useEffect, useMemo, useRef, type PropsWithChildren } from 'react'
 
 import { init, miniApp, retrieveLaunchParams, useSignal, viewport } from '@tma.js/sdk-react'
 
@@ -13,6 +13,8 @@ const tryRun = (callback: () => void) => {
 		return
 	}
 }
+
+const MOBILE_TELEGRAM_PLATFORMS = new Set(['android', 'android_x', 'ios'])
 
 export const TelegramProvider = ({ children }: PropsWithChildren) => {
 	const { isTelegramEnvironment, status } = useAuthSession()
@@ -30,6 +32,20 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 		() => 0
 	)
 	const isFullscreen = useSignal(viewport.isFullscreen, () => false)
+	const launchPlatform = useMemo(() => {
+		if (!isTelegramEnvironment) {
+			return undefined
+		}
+
+		try {
+			return retrieveLaunchParams().tgWebAppPlatform
+		} catch {
+			return undefined
+		}
+	}, [isTelegramEnvironment])
+	const isMobileTelegramPlatform =
+		launchPlatform !== undefined &&
+		MOBILE_TELEGRAM_PLATFORMS.has(launchPlatform)
 
 	useEffect(() => {
 		if (!isTelegramEnvironment || isInitializedRef.current) {
@@ -86,16 +102,8 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 		}
 
 		const root = document.documentElement
-		const launchPlatform = (() => {
-			try {
-				return retrieveLaunchParams().tgWebAppPlatform
-			} catch {
-				return undefined
-			}
-		})()
-		const isCompactViewport = window.matchMedia('(max-width: 899px)').matches
 		const topChromeOffset =
-			isCompactViewport && isFullscreen
+			isMobileTelegramPlatform && isFullscreen
 				? launchPlatform === 'ios'
 					? 44
 					: 40
@@ -120,7 +128,9 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 		contentSafeAreaInsetBottom,
 		contentSafeAreaInsetTop,
 		isFullscreen,
+		isMobileTelegramPlatform,
 		isTelegramEnvironment,
+		launchPlatform,
 		safeAreaInsetBottom,
 		safeAreaInsetTop
 	])
@@ -131,8 +141,6 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 		}
 
 		const frame = requestAnimationFrame(() => {
-			const isCompactViewport = window.matchMedia('(max-width: 899px)').matches
-
 			if (!isExpandedRef.current) {
 				tryRun(() => viewport.expand())
 				isExpandedRef.current = true
@@ -143,7 +151,7 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 				isReadyRef.current = true
 			}
 
-			if (isCompactViewport && !isFullscreenRequestedRef.current) {
+			if (isMobileTelegramPlatform && !isFullscreenRequestedRef.current) {
 				void viewport.requestFullscreen().catch(() => undefined)
 				isFullscreenRequestedRef.current = true
 			}
@@ -152,22 +160,20 @@ export const TelegramProvider = ({ children }: PropsWithChildren) => {
 		return () => {
 			cancelAnimationFrame(frame)
 		}
-	}, [isTelegramEnvironment, status])
+	}, [isMobileTelegramPlatform, isTelegramEnvironment, status])
 
 	useEffect(() => {
 		if (!isTelegramEnvironment || !isFullscreen) {
 			return
 		}
 
-		const isCompactViewport = window.matchMedia('(max-width: 899px)').matches
-
-		if (isCompactViewport) {
+		if (isMobileTelegramPlatform) {
 			return
 		}
 
 		void viewport.exitFullscreen().catch(() => undefined)
 		isFullscreenRequestedRef.current = false
-	}, [isFullscreen, isTelegramEnvironment])
+	}, [isFullscreen, isMobileTelegramPlatform, isTelegramEnvironment])
 
 	return children
 }
