@@ -14,9 +14,7 @@ import {
 import { useNotificationsStatusQuery } from '@/shared/api/services/notifications'
 import { Button } from '@/shared/kit'
 import {
-	formatDateLabel,
-	getApiErrorMessage,
-	getTodayDateOnly
+	getApiErrorMessage
 } from '@/shared/lib'
 import { ROUTES } from '@/shared/model'
 import { Layout } from '@/shared/widgets'
@@ -39,7 +37,6 @@ const DashboardPage = () => {
 	const deleteBooking = useDeleteBookingMutation()
 	const updateBookingStatus = useUpdateBookingStatusMutation()
 	const [listError, setListError] = useState<string | null>(null)
-	const todayLabel = formatDateLabel(getTodayDateOnly())
 
 	const handleEdit = (booking: Booking) => {
 		navigate(`${ROUTES.BOOKINGS}?bookingId=${booking.id}`)
@@ -116,6 +113,8 @@ const DashboardPage = () => {
 							key={booking.id}
 							booking={booking}
 							bikeName={booking.assetName}
+							className={styles.dashboardBookingCard}
+							compact
 							isDeleting={deleteBooking.isPending && deleteBooking.variables === booking.id}
 							isUpdatingStatus={
 								updateBookingStatus.isPending &&
@@ -145,7 +144,6 @@ const DashboardPage = () => {
 			<div className={styles.page}>
 				<section className={styles.summaryBar}>
 					<div className={styles.summaryCopy}>
-						<span className={styles.dateLabel}>{todayLabel}</span>
 						<p className={styles.statusLine}>{reminderLabel}</p>
 					</div>
 

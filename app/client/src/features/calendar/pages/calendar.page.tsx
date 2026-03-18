@@ -22,8 +22,10 @@ const CALENDAR_WINDOW_DAYS = 7
 
 const CalendarPage = () => {
 	const { t } = useI18n()
-	const [rangeStart, setRangeStart] = useState(getTodayDateOnly())
+	const todayDate = getTodayDateOnly()
+	const [rangeStart, setRangeStart] = useState(todayDate)
 	const rangeEnd = addDaysToDateOnly(rangeStart, CALENDAR_WINDOW_DAYS - 1)
+	const isCurrentRange = rangeStart === todayDate
 	const { data, error, isLoading } = useDashboardOccupancyQuery({
 		from: rangeStart,
 		to: rangeEnd
@@ -34,7 +36,7 @@ const CalendarPage = () => {
 	}
 
 	const handleResetRange = () => {
-		setRangeStart(getTodayDateOnly())
+		setRangeStart(todayDate)
 	}
 
 	return (
@@ -46,13 +48,32 @@ const CalendarPage = () => {
 						<h2 className={styles.rangeTitle}>{formatDateRange(rangeStart, rangeEnd)}</h2>
 					</div>
 					<div className={styles.actions}>
-						<Button type='button' variant='secondary' onClick={() => handleShiftRange(-7)}>
+						<Button
+							type='button'
+							variant='ghost'
+							size='sm'
+							className={styles.navAction}
+							onClick={() => handleShiftRange(-7)}
+						>
 							{t('common.prev')}
 						</Button>
-						<Button type='button' variant='secondary' onClick={handleResetRange}>
+						<Button
+							type='button'
+							variant='secondary'
+							size='sm'
+							className={`${styles.navAction} ${isCurrentRange ? styles.navActionActive : ''}`}
+							aria-pressed={isCurrentRange}
+							onClick={handleResetRange}
+						>
 							{t('common.today')}
 						</Button>
-						<Button type='button' onClick={() => handleShiftRange(7)}>
+						<Button
+							type='button'
+							variant='ghost'
+							size='sm'
+							className={styles.navAction}
+							onClick={() => handleShiftRange(7)}
+						>
 							{t('common.next')}
 						</Button>
 					</div>
@@ -91,7 +112,7 @@ const CalendarPage = () => {
 									</div>
 									<Link
 										className={styles.rowLink}
-										to={`${ROUTES.BOOKINGS}?assetId=${bike.assetId}`}
+										to={`${ROUTES.BOOKINGS}?filterAssetId=${bike.assetId}`}
 									>
 										{t('common.open')}
 									</Link>
@@ -111,7 +132,7 @@ const CalendarPage = () => {
 														? styles.occupiedPaidCell
 														: styles.occupiedPendingCell
 												}
-												to={`${ROUTES.BOOKINGS}?bookingId=${booking.id}`}
+												to={`${ROUTES.BOOKINGS}?filterAssetId=${bike.assetId}&focusBookingId=${booking.id}`}
 											>
 												<span className={styles.dayLabel}>{formatDayColumnLabel(day)}</span>
 												<strong>{booking.clientName}</strong>

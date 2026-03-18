@@ -34,8 +34,10 @@
 		box-shadow 0.2s ease,
 		transform 0.2s ease;
 
-	&:hover:not(:disabled) {
-		border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+	@media (hover: hover) and (pointer: fine) {
+		&:hover:not(:disabled) {
+			border-color: color-mix(in srgb, var(--color-accent) 24%, var(--color-border));
+		}
 	}
 
 	&:focus-visible {
@@ -117,8 +119,10 @@
 		background-color 0.18s ease,
 		color 0.18s ease;
 
-	&:hover {
-		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+		}
 	}
 }
 

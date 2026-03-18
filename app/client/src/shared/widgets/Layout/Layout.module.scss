@@ -8,7 +8,7 @@
 .container {
 	position: relative;
 	z-index: 1;
-	width: min(100%, 1180px);
+	width: min(100%, 1260px);
 	margin: 0 auto;
 	padding: 0.5rem;
 }
@@ -46,20 +46,21 @@
 
 @media (min-width: 900px) {
 	.shell {
-		padding: 1.5rem;
+		padding: 1.1rem 1.25rem 1.4rem;
 	}
 
 	.container {
-		padding: 2rem;
+		padding: 1.35rem 1.45rem 1.5rem;
 	}
 
 	.content {
-		gap: 1.5rem;
+		gap: 1.15rem;
 	}
 }
 
 @media (min-width: 1200px) {
 	.container {
-		padding: 2.25rem;
+		width: min(100%, 1320px);
+		padding: 1.4rem 1.6rem 1.65rem;
 	}
 }

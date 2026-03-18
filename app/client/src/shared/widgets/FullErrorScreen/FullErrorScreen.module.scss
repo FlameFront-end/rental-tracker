@@ -154,15 +154,15 @@
 	font-weight: 700;
 	cursor: pointer;
 	transition:
-		transform 0.18s ease,
 		border-color 0.18s ease,
 		background-color 0.18s ease,
 		color 0.18s ease,
 		box-shadow 0.18s ease;
 
-	&:hover {
-		transform: translateY(-1px);
-		box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+		}
 	}
 
 	&:focus-visible {
@@ -178,13 +178,26 @@
 		var(--color-accent),
 		color-mix(in srgb, var(--color-accent-2) 26%, var(--color-accent))
 	);
-	color: #041019;
+	color: var(--color-accent-contrast);
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			border-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+		}
+	}
 }
 
 .actionSecondary {
 	border-color: var(--color-border);
 	background: var(--color-surface-muted);
 	color: var(--color-text);
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover {
+			border-color: color-mix(in srgb, var(--color-accent) 18%, var(--color-border));
+			background: color-mix(in srgb, var(--color-accent-soft) 18%, var(--color-surface-muted));
+		}
+	}
 }
 
 .detailBlock {

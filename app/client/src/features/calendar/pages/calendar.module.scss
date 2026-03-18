@@ -50,6 +50,38 @@
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 0.55rem;
+	padding: 0.3rem;
+	border: 1px solid var(--color-border);
+	border-radius: 1.15rem;
+	background: color-mix(in srgb, var(--color-surface-muted) 70%, transparent);
+}
+
+.navAction {
+	border-radius: 0.9rem;
+	box-shadow: none;
+}
+
+.navActionActive {
+	border-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+	background: linear-gradient(
+		135deg,
+		var(--color-accent),
+		color-mix(in srgb, var(--color-accent-2) 32%, var(--color-accent))
+	);
+	color: var(--color-accent-contrast);
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.navActionActive:hover:not(:disabled) {
+		border-color: color-mix(in srgb, var(--color-accent) 24%, transparent);
+		background: linear-gradient(
+			135deg,
+			var(--color-accent),
+			color-mix(in srgb, var(--color-accent-2) 28%, var(--color-accent))
+		);
+		box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+	}
 }
 
 .timelineList {

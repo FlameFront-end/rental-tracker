@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -31,15 +31,19 @@ import styles from './bookings.module.scss'
 
 const ALL_FILTER_VALUE = 'all'
 const BOOKING_PREFILL_KEYS = ['bookingId', 'assetId', 'startDate', 'endDate'] as const
+const FILTER_ASSET_QUERY_KEY = 'filterAssetId'
+const FOCUS_BOOKING_QUERY_KEY = 'focusBookingId'
 
 const BookingsPage = () => {
 	const navigate = useNavigate()
 	const confirm = useConfirm()
 	const { t } = useI18n()
 	const [searchParams, setSearchParams] = useSearchParams()
+	const assetFilterParam = searchParams.get(FILTER_ASSET_QUERY_KEY)
+	const focusBookingId = searchParams.get(FOCUS_BOOKING_QUERY_KEY)
+	const selectedAssetFilter = assetFilterParam ?? ALL_FILTER_VALUE
 	const [isComposerOpen, setIsComposerOpen] = useState(false)
 	const [formResetVersion, setFormResetVersion] = useState(0)
-	const [selectedAssetFilter, setSelectedAssetFilter] = useState(ALL_FILTER_VALUE)
 	const [selectedStatusFilter, setSelectedStatusFilter] = useState<
 		BookingStatus | typeof ALL_FILTER_VALUE
 	>(ALL_FILTER_VALUE)
@@ -124,6 +128,8 @@ const BookingsPage = () => {
 	const updateBooking = useUpdateBookingMutation()
 	const deleteBooking = useDeleteBookingMutation()
 	const updateBookingStatus = useUpdateBookingStatusMutation()
+	const bookingItemRefs = useRef<Record<string, HTMLDivElement | null>>({})
+	const lastFocusedBookingRef = useRef<string | null>(null)
 	const selectedBooking = useMemo(
 		() => bookings.find((booking) => booking.id === selectedBookingId),
 		[bookings, selectedBookingId]
@@ -132,11 +138,53 @@ const BookingsPage = () => {
 		assets.length > 0 && (isComposerOpen || Boolean(selectedBookingId) || hasDraftPrefill)
 	const pendingCount = bookings.filter((booking) => booking.status === 'pending').length
 
+	useEffect(() => {
+		if (!focusBookingId || isBookingsLoading || bookings.length === 0) {
+			return
+		}
+
+		if (lastFocusedBookingRef.current === focusBookingId) {
+			return
+		}
+
+		const focusedBookingExists = bookings.some((booking) => booking.id === focusBookingId)
+
+		if (!focusedBookingExists) {
+			return
+		}
+
+		const element = bookingItemRefs.current[focusBookingId]
+
+		if (!element) {
+			return
+		}
+
+		lastFocusedBookingRef.current = focusBookingId
+		element.scrollIntoView({
+			behavior: 'smooth',
+			block: 'center'
+		})
+	}, [bookings, focusBookingId, isBookingsLoading])
+
 	const clearBookingSearchParams = () => {
 		const nextSearchParams = new URLSearchParams(searchParams)
 
 		for (const key of BOOKING_PREFILL_KEYS) {
 			nextSearchParams.delete(key)
+		}
+
+		setSearchParams(nextSearchParams, {
+			replace: true
+		})
+	}
+
+	const updateAssetFilter = (nextValue: string) => {
+		const nextSearchParams = new URLSearchParams(searchParams)
+
+		if (nextValue === ALL_FILTER_VALUE) {
+			nextSearchParams.delete(FILTER_ASSET_QUERY_KEY)
+		} else {
+			nextSearchParams.set(FILTER_ASSET_QUERY_KEY, nextValue)
 		}
 
 		setSearchParams(nextSearchParams, {
@@ -161,7 +209,7 @@ const BookingsPage = () => {
 	}
 
 	const handleClearFilters = () => {
-		setSelectedAssetFilter(ALL_FILTER_VALUE)
+		updateAssetFilter(ALL_FILTER_VALUE)
 		setSelectedStatusFilter(ALL_FILTER_VALUE)
 		setListError(null)
 	}
@@ -177,6 +225,7 @@ const BookingsPage = () => {
 		const nextSearchParams = new URLSearchParams(searchParams)
 
 		nextSearchParams.set('bookingId', booking.id)
+		nextSearchParams.delete(FOCUS_BOOKING_QUERY_KEY)
 		nextSearchParams.delete('assetId')
 		nextSearchParams.delete('startDate')
 		nextSearchParams.delete('endDate')
@@ -294,7 +343,7 @@ const BookingsPage = () => {
 									label={t('bookings.filterBike')}
 									options={assetFilterOptions}
 									value={selectedAssetFilter}
-									onChange={(event) => setSelectedAssetFilter(event.target.value)}
+									onChange={(event) => updateAssetFilter(event.target.value)}
 								/>
 								<SelectField
 									id='bookings-filter-status'
@@ -347,22 +396,31 @@ const BookingsPage = () => {
 							) : null}
 							<div className={styles.bookingList}>
 								{bookings.map((booking) => (
-									<BookingCard
+									<div
 										key={booking.id}
-										booking={booking}
-										bikeName={assetNameMap[booking.assetId] ?? t('bookings.unknownBike')}
-										isDeleting={
-											deleteBooking.isPending && deleteBooking.variables === booking.id
+										ref={(element) => {
+											bookingItemRefs.current[booking.id] = element
+										}}
+										className={
+											booking.id === focusBookingId ? styles.focusedBookingItem : undefined
 										}
-										isEditing={selectedBookingId === booking.id}
-										isUpdatingStatus={
-											updateBookingStatus.isPending &&
-											updateBookingStatus.variables?.bookingId === booking.id
-										}
-										onDelete={handleDelete}
-										onEdit={handleEdit}
-										onToggleStatus={handleToggleStatus}
-									/>
+									>
+										<BookingCard
+											booking={booking}
+											bikeName={assetNameMap[booking.assetId] ?? t('bookings.unknownBike')}
+											isDeleting={
+												deleteBooking.isPending && deleteBooking.variables === booking.id
+											}
+											isEditing={selectedBookingId === booking.id}
+											isUpdatingStatus={
+												updateBookingStatus.isPending &&
+												updateBookingStatus.variables?.bookingId === booking.id
+											}
+											onDelete={handleDelete}
+											onEdit={handleEdit}
+											onToggleStatus={handleToggleStatus}
+										/>
+									</div>
 								))}
 							</div>
 						</section>

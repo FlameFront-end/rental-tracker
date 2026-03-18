@@ -1,4 +1,4 @@
-import { Check, Languages, LogOut, MoonStar, SunMedium } from 'lucide-react'
+import { Check, Languages, MoonStar, SunMedium } from 'lucide-react'
 
 import { useMemo, useState } from 'react'
 
@@ -17,19 +17,22 @@ import { ScreenSheet } from '@/shared/widgets'
 
 import styles from './Header.module.scss'
 
-interface HeaderProps {
-	title: string
-	subtitle?: string
-}
-
-const Header = ({ title, subtitle }: HeaderProps) => {
+const Header = () => {
 	const location = useLocation()
-	const { logout, status } = useAuthSession()
+	const { isTelegramEnvironment, profile, status, user } = useAuthSession()
 	const { locale, setLocale, t } = useI18n()
 	const { theme, toggleTheme } = useTheme()
 	const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false)
-	const showSessionControls =
+	const isWorkspaceRoute =
 		status === 'authenticated' && location.pathname !== ROUTES.AUTH
+	const displayName =
+		profile?.displayName ??
+		(isWorkspaceRoute
+			? isTelegramEnvironment
+				? `ID ${user?.telegramId ?? ''}`
+				: t('header.devAccount')
+			: t('header.appName'))
+	const avatarLabel = profile?.initials ?? (isWorkspaceRoute ? 'TG' : 'RT')
 	const languageOptions = useMemo(
 		() =>
 			APP_LOCALES.map((optionLocale) => ({
@@ -49,10 +52,15 @@ const Header = ({ title, subtitle }: HeaderProps) => {
 		<>
 			<header className={styles.header}>
 				<div className={styles.row}>
-					<div className={styles.heading}>
-						<span className={styles.appLabel}>{t('header.appName')}</span>
-						<h1 className={styles.title}>{title}</h1>
-						{subtitle ? <p className={styles.subtitle}>{subtitle}</p> : null}
+					<div className={styles.identity}>
+						<div className={styles.avatar} aria-hidden='true'>
+							{profile?.photoUrl ? (
+								<img src={profile.photoUrl} alt='' className={styles.avatarImage} />
+							) : (
+								<span className={styles.avatarFallback}>{avatarLabel}</span>
+							)}
+						</div>
+						<strong className={styles.name}>{displayName}</strong>
 					</div>
 
 					<div className={styles.actions}>
@@ -86,17 +94,6 @@ const Header = ({ title, subtitle }: HeaderProps) => {
 								<MoonStar size={18} strokeWidth={1.9} aria-hidden='true' />
 							)}
 						</button>
-						{showSessionControls ? (
-							<button
-								type='button'
-								className={styles.control}
-								onClick={logout}
-								aria-label={t('header.logout')}
-								title={t('header.logout')}
-							>
-								<LogOut size={18} strokeWidth={1.9} aria-hidden='true' />
-							</button>
-						) : null}
 					</div>
 				</div>
 			</header>

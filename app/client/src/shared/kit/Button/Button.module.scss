@@ -10,16 +10,16 @@
 	font-weight: 700;
 	cursor: pointer;
 	transition:
-		transform 0.2s ease,
 		opacity 0.2s ease,
 		background-color 0.2s ease,
 		color 0.2s ease,
 		border-color 0.2s ease,
 		box-shadow 0.2s ease;
 
-	&:hover:not(:disabled) {
-		transform: translateY(-1px);
-		box-shadow: 0 12px 22px rgba(0, 0, 0, 0.12);
+	@media (hover: hover) and (pointer: fine) {
+		&:hover:not(:disabled) {
+			box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+		}
 	}
 
 	&:disabled {
@@ -35,25 +35,53 @@
 		var(--color-accent),
 		color-mix(in srgb, var(--color-accent-2) 32%, var(--color-accent))
 	);
-	color: #021018;
+	color: var(--color-accent-contrast);
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover:not(:disabled) {
+			border-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+		}
+	}
 }
 
 .secondary {
 	background: var(--color-surface-muted);
 	border-color: var(--color-border);
 	color: var(--color-text);
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover:not(:disabled) {
+			border-color: color-mix(in srgb, var(--color-accent) 18%, var(--color-border));
+			background: color-mix(in srgb, var(--color-accent-soft) 18%, var(--color-surface-muted));
+		}
+	}
 }
 
 .ghost {
 	background: transparent;
 	border-color: var(--color-border);
 	color: var(--color-text-muted);
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover:not(:disabled) {
+			border-color: color-mix(in srgb, var(--color-accent) 18%, var(--color-border));
+			background: color-mix(in srgb, var(--color-accent-soft) 12%, transparent);
+			color: var(--color-text);
+		}
+	}
 }
 
 .danger {
 	background: var(--color-danger-soft);
 	border-color: transparent;
 	color: var(--color-danger-text);
+
+	@media (hover: hover) and (pointer: fine) {
+		&:hover:not(:disabled) {
+			border-color: color-mix(in srgb, var(--color-danger-text) 20%, transparent);
+			background: color-mix(in srgb, var(--color-danger-soft) 90%, var(--color-surface-muted));
+		}
+	}
 }
 
 .sm {

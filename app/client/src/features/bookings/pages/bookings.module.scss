@@ -76,6 +76,18 @@
 	gap: 0.7rem;
 }
 
+.focusedBookingItem {
+	scroll-margin-top: 7rem;
+	animation: booking-focus-pulse 1.5s ease;
+}
+
+.focusedBookingItem :global(article) {
+	border-color: color-mix(in srgb, var(--color-accent) 48%, var(--color-border));
+	box-shadow:
+		0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent),
+		0 18px 34px rgba(0, 0, 0, 0.14);
+}
+
 .loading,
 .error {
 	padding: 0.85rem 0.9rem;
@@ -91,6 +103,18 @@
 	background: var(--color-danger-soft);
 	color: var(--color-danger-text);
 	font-weight: 600;
+}
+
+@keyframes booking-focus-pulse {
+	0% {
+		transform: translateY(0.45rem);
+		opacity: 0.55;
+	}
+
+	100% {
+		transform: translateY(0);
+		opacity: 1;
+	}
 }
 
 @media (min-width: 720px) {

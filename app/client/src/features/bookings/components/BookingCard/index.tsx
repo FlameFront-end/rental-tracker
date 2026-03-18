@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import { Check, Clock3, SquarePen, Trash2 } from 'lucide-react'
 
 import { useI18n } from '@/app/i18n/use-i18n'
@@ -13,6 +14,8 @@ import styles from './BookingCard.module.scss'
 interface BookingCardProps {
 	bikeName: string
 	booking: Booking
+	className?: string
+	compact?: boolean
 	isDeleting?: boolean
 	isEditing?: boolean
 	isUpdatingStatus?: boolean
@@ -24,6 +27,8 @@ interface BookingCardProps {
 const BookingCard = ({
 	bikeName,
 	booking,
+	className,
+	compact = false,
 	isDeleting = false,
 	isEditing = false,
 	isUpdatingStatus = false,
@@ -36,7 +41,7 @@ const BookingCard = ({
 	const isBusy = isDeleting || isUpdatingStatus
 
 	return (
-		<article className={styles.card}>
+		<article className={clsx(styles.card, compact && styles.compactCard, className)}>
 			<div className={styles.header}>
 				<div className={styles.heading}>
 					<p className={styles.kicker}>{bikeName}</p>
@@ -46,23 +51,25 @@ const BookingCard = ({
 					className={styles[booking.status === 'paid' ? 'badgePaid' : 'badgePending']}
 				>
 					{booking.status === 'paid'
-						? t('booking.status.paid')
-						: t('booking.status.pending')}
+						? t('booking.badge.paid')
+						: t('booking.badge.pending')}
 				</span>
 			</div>
 
 			<div className={styles.metaRow}>
 				<div className={styles.metaBlock}>
 					<span className={styles.metaLabel}>{t('booking.card.dates')}</span>
-					<strong>{formatDateRange(booking.startDate, booking.endDate)}</strong>
+					<strong className={styles.metaValue}>{formatDateRange(booking.startDate, booking.endDate)}</strong>
 				</div>
-				<div className={styles.metaBlock}>
+				<div className={`${styles.metaBlock} ${styles.metaBlockPrice}`}>
 					<span className={styles.metaLabel}>{t('booking.card.price')}</span>
-					<strong>{formatPrice(booking.price)}</strong>
+					<strong className={`${styles.metaValue} ${styles.metaValuePrice}`}>
+						{formatPrice(booking.price)}
+					</strong>
 				</div>
 				<div className={styles.metaBlock}>
 					<span className={styles.metaLabel}>{t('booking.card.duration')}</span>
-					<strong>{t('booking.card.days', { count: duration })}</strong>
+					<strong className={styles.metaValue}>{t('booking.card.days', { count: duration })}</strong>
 				</div>
 			</div>
 
@@ -121,8 +128,8 @@ const BookingCard = ({
 							)}
 							<span>
 								{booking.status === 'paid'
-									? t('booking.status.pending')
-									: t('booking.status.paid')}
+									? t('booking.card.markPendingShort')
+									: t('booking.card.markPaidShort')}
 							</span>
 						</>
 					)}
