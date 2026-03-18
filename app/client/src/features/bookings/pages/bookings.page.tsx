@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useConfirm } from '@/app/confirm/use-confirm'
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
+import { useTelegramFormGuard } from '@/app/telegram/use-telegram-form-guard'
 import type {
 	Booking,
 	BookingFilters,
@@ -38,12 +40,18 @@ const BookingsPage = () => {
 	const navigate = useNavigate()
 	const confirm = useConfirm()
 	const { t } = useI18n()
+	const {
+		error: hapticError,
+		selectionChanged,
+		success
+	} = useTelegramHaptics()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const assetFilterParam = searchParams.get(FILTER_ASSET_QUERY_KEY)
 	const focusBookingId = searchParams.get(FOCUS_BOOKING_QUERY_KEY)
 	const selectedAssetFilter = assetFilterParam ?? ALL_FILTER_VALUE
 	const [isComposerOpen, setIsComposerOpen] = useState(false)
 	const [formResetVersion, setFormResetVersion] = useState(0)
+	const [isComposerDirty, setIsComposerDirty] = useState(false)
 	const [selectedStatusFilter, setSelectedStatusFilter] = useState<
 		BookingStatus | typeof ALL_FILTER_VALUE
 	>(ALL_FILTER_VALUE)
@@ -166,7 +174,7 @@ const BookingsPage = () => {
 		})
 	}, [bookings, focusBookingId, isBookingsLoading])
 
-	const clearBookingSearchParams = () => {
+	const clearBookingSearchParams = useCallback(() => {
 		const nextSearchParams = new URLSearchParams(searchParams)
 
 		for (const key of BOOKING_PREFILL_KEYS) {
@@ -176,9 +184,9 @@ const BookingsPage = () => {
 		setSearchParams(nextSearchParams, {
 			replace: true
 		})
-	}
+	}, [searchParams, setSearchParams])
 
-	const updateAssetFilter = (nextValue: string) => {
+	const updateAssetFilter = useCallback((nextValue: string) => {
 		const nextSearchParams = new URLSearchParams(searchParams)
 
 		if (nextValue === ALL_FILTER_VALUE) {
@@ -190,35 +198,57 @@ const BookingsPage = () => {
 		setSearchParams(nextSearchParams, {
 			replace: true
 		})
-	}
+	}, [searchParams, setSearchParams])
 
-	const handleStartCreate = () => {
+	const handleStartCreate = useCallback(() => {
+		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
 		setIsComposerOpen(true)
 		setFormResetVersion((current) => current + 1)
 		clearBookingSearchParams()
-	}
+	}, [clearBookingSearchParams])
 
-	const handleCloseComposer = () => {
+	const handleCloseComposer = useCallback(async () => {
+		if (isComposerDirty) {
+			const confirmed = await confirm({
+				title: t('common.unsavedChangesTitle'),
+				description: t('common.unsavedChangesDescription'),
+				confirmText: t('common.discard'),
+				cancelText: t('common.keep'),
+				tone: 'danger'
+			})
+
+			if (!confirmed) {
+				return
+			}
+		}
+
+		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
 		setIsComposerOpen(false)
 		setFormResetVersion((current) => current + 1)
 		clearBookingSearchParams()
-	}
+	}, [clearBookingSearchParams, confirm, isComposerDirty, t])
 
-	const handleClearFilters = () => {
+	const handleClearFilters = useCallback(() => {
 		updateAssetFilter(ALL_FILTER_VALUE)
 		setSelectedStatusFilter(ALL_FILTER_VALUE)
 		setListError(null)
-	}
+	}, [updateAssetFilter])
 
-	const handleOpenBikes = () => {
+	const handleOpenBikes = useCallback(() => {
 		navigate(ROUTES.ASSETS)
-	}
+	}, [navigate])
+
+	useTelegramFormGuard({
+		active: isComposerVisible,
+		isDirty: isComposerDirty
+	})
 
 	const handleEdit = (booking: Booking) => {
+		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
 		setIsComposerOpen(true)
@@ -249,9 +279,12 @@ const BookingsPage = () => {
 			}
 
 			setFormResetVersion((current) => current + 1)
+			setIsComposerDirty(false)
 			setIsComposerOpen(false)
 			clearBookingSearchParams()
+			success()
 		} catch (submitError) {
+			hapticError()
 			setFormError(getApiErrorMessage(submitError, t('bookings.errorSave')))
 		}
 	}
@@ -281,7 +314,9 @@ const BookingsPage = () => {
 				setIsComposerOpen(false)
 				clearBookingSearchParams()
 			}
+			success()
 		} catch (deleteError) {
+			hapticError()
 			setListError(getApiErrorMessage(deleteError, t('bookings.errorDelete')))
 		}
 	}
@@ -294,7 +329,9 @@ const BookingsPage = () => {
 				bookingId: booking.id,
 				status: booking.status === 'paid' ? 'pending' : 'paid'
 			})
+			success()
 		} catch (statusError) {
+			hapticError()
 			setListError(getApiErrorMessage(statusError, t('bookings.errorStatus')))
 		}
 	}
@@ -343,18 +380,26 @@ const BookingsPage = () => {
 									label={t('bookings.filterBike')}
 									options={assetFilterOptions}
 									value={selectedAssetFilter}
-									onChange={(event) => updateAssetFilter(event.target.value)}
+									onChange={(event) => {
+										if (event.target.value !== selectedAssetFilter) {
+											selectionChanged()
+										}
+										updateAssetFilter(event.target.value)
+									}}
 								/>
 								<SelectField
 									id='bookings-filter-status'
 									label={t('bookings.filterStatus')}
 									options={statusFilterOptions}
 									value={selectedStatusFilter}
-									onChange={(event) =>
+									onChange={(event) => {
+										if (event.target.value !== selectedStatusFilter) {
+											selectionChanged()
+										}
 										setSelectedStatusFilter(
 											event.target.value as BookingStatus | typeof ALL_FILTER_VALUE
 										)
-									}
+									}}
 								/>
 							</div>
 						</section>
@@ -434,6 +479,7 @@ const BookingsPage = () => {
 						draftValues={selectedBooking ? undefined : bookingDraft}
 						error={formError}
 						isSubmitting={createBooking.isPending || updateBooking.isPending}
+						onDirtyChange={setIsComposerDirty}
 						onCancelEdit={handleCloseComposer}
 						onSubmit={handleSubmit}
 						resetVersion={formResetVersion}

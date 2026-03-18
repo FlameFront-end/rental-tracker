@@ -14,6 +14,7 @@ interface AssetFormCardProps {
 	asset?: Asset
 	error?: string | null
 	isSubmitting?: boolean
+	onDirtyChange?: (isDirty: boolean) => void
 	onCancelEdit: () => void
 	onSubmit: (values: AssetFormValues) => Promise<void> | void
 	resetVersion: number
@@ -27,6 +28,7 @@ const AssetFormCard = ({
 	asset,
 	error,
 	isSubmitting = false,
+	onDirtyChange,
 	onCancelEdit,
 	onSubmit,
 	resetVersion
@@ -41,7 +43,7 @@ const AssetFormCard = ({
 			.max(120, t('assetForm.nameMax'))
 	})
 	const {
-		formState: { errors },
+		formState: { errors, isDirty },
 		handleSubmit,
 		register,
 		reset
@@ -50,9 +52,18 @@ const AssetFormCard = ({
 		resolver: zodResolver(assetSchema)
 	})
 
+	const handleCancel = () => {
+		reset(createDefaultValues())
+		onCancelEdit()
+	}
+
 	useEffect(() => {
 		reset(createDefaultValues(asset))
 	}, [asset, reset, resetVersion])
+
+	useEffect(() => {
+		onDirtyChange?.(isDirty)
+	}, [isDirty, onDirtyChange])
 
 	return (
 		<aside className={styles.card}>
@@ -87,14 +98,7 @@ const AssetFormCard = ({
 								: t('common.createBike')}
 					</Button>
 					{isEditMode ? (
-						<Button
-							type='button'
-							variant='secondary'
-							onClick={() => {
-								reset(createDefaultValues())
-								onCancelEdit()
-							}}
-						>
+						<Button type='button' variant='secondary' onClick={handleCancel}>
 							{t('common.close')}
 						</Button>
 					) : null}

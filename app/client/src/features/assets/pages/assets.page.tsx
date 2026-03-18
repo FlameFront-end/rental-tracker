@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { useConfirm } from '@/app/confirm/use-confirm'
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
+import { useTelegramFormGuard } from '@/app/telegram/use-telegram-form-guard'
 import type { Asset, AssetFormValues } from '@/shared/api/services/assets'
 import {
 	useAssetsQuery,
@@ -22,9 +24,11 @@ import styles from './assets.module.scss'
 const AssetsPage = () => {
 	const confirm = useConfirm()
 	const { t } = useI18n()
+	const { error: hapticError, success } = useTelegramHaptics()
 	const [isComposerOpen, setIsComposerOpen] = useState(false)
 	const [formResetVersion, setFormResetVersion] = useState(0)
 	const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
+	const [isComposerDirty, setIsComposerDirty] = useState(false)
 	const [formError, setFormError] = useState<string | null>(null)
 	const [listError, setListError] = useState<string | null>(null)
 	const {
@@ -41,27 +45,49 @@ const AssetsPage = () => {
 	)
 	const isComposerVisible = isComposerOpen || Boolean(selectedAsset)
 
-	const handleStartCreate = () => {
+	const handleStartCreate = useCallback(() => {
 		setSelectedAssetId(null)
+		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
 		setIsComposerOpen(true)
 		setFormResetVersion((current) => current + 1)
-	}
+	}, [])
 
 	const handleEdit = (asset: Asset) => {
 		setSelectedAssetId(asset.id)
+		setIsComposerDirty(false)
 		setFormError(null)
 		setListError(null)
 		setIsComposerOpen(true)
 	}
 
-	const handleCloseComposer = () => {
+	const handleCloseComposer = useCallback(async () => {
+		if (isComposerDirty) {
+			const confirmed = await confirm({
+				title: t('common.unsavedChangesTitle'),
+				description: t('common.unsavedChangesDescription'),
+				confirmText: t('common.discard'),
+				cancelText: t('common.keep'),
+				tone: 'danger'
+			})
+
+			if (!confirmed) {
+				return
+			}
+		}
+
 		setSelectedAssetId(null)
+		setIsComposerDirty(false)
 		setFormError(null)
 		setIsComposerOpen(false)
 		setFormResetVersion((current) => current + 1)
-	}
+	}, [confirm, isComposerDirty, t])
+
+	useTelegramFormGuard({
+		active: isComposerVisible,
+		isDirty: isComposerDirty
+	})
 
 	const handleSubmit = async (values: AssetFormValues) => {
 		setFormError(null)
@@ -77,9 +103,12 @@ const AssetsPage = () => {
 			}
 
 			setSelectedAssetId(null)
+			setIsComposerDirty(false)
 			setIsComposerOpen(false)
 			setFormResetVersion((current) => current + 1)
+			success()
 		} catch (submitError) {
+			hapticError()
 			setFormError(
 				getApiErrorMessage(submitError, t('assets.errorSave'))
 			)
@@ -111,7 +140,9 @@ const AssetsPage = () => {
 				setIsComposerOpen(false)
 				setFormResetVersion((current) => current + 1)
 			}
+			success()
 		} catch (deleteError) {
+			hapticError()
 			setListError(
 				getApiErrorMessage(
 					deleteError,
@@ -178,6 +209,7 @@ const AssetsPage = () => {
 						asset={selectedAsset}
 						error={formError}
 						isSubmitting={createAsset.isPending || updateAsset.isPending}
+						onDirtyChange={setIsComposerDirty}
 						onCancelEdit={handleCloseComposer}
 						onSubmit={handleSubmit}
 						resetVersion={formResetVersion}

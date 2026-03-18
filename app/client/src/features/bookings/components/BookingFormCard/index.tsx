@@ -20,6 +20,7 @@ interface BookingFormCardProps {
 	draftValues?: Partial<BookingFormValues>
 	error?: string | null
 	isSubmitting?: boolean
+	onDirtyChange?: (isDirty: boolean) => void
 	onCancelEdit: () => void
 	onSubmit: (values: BookingFormValues) => Promise<void> | void
 	resetVersion: number
@@ -47,6 +48,7 @@ const BookingFormCard = ({
 	draftValues,
 	error,
 	isSubmitting = false,
+	onDirtyChange,
 	onCancelEdit,
 	onSubmit,
 	resetVersion
@@ -82,7 +84,7 @@ const BookingFormCard = ({
 		}
 	]
 	const {
-		formState: { errors },
+		formState: { errors, isDirty },
 		handleSubmit,
 		register,
 		reset
@@ -91,9 +93,18 @@ const BookingFormCard = ({
 		resolver: zodResolver(bookingSchema)
 	})
 
+	const handleCancel = () => {
+		reset(createDefaultValues(undefined, defaultAssetId, draftValues))
+		onCancelEdit()
+	}
+
 	useEffect(() => {
 		reset(createDefaultValues(booking, defaultAssetId, draftValues))
 	}, [booking, defaultAssetId, draftValues, reset, resetVersion])
+
+	useEffect(() => {
+		onDirtyChange?.(isDirty)
+	}, [isDirty, onDirtyChange])
 
 	return (
 		<aside className={styles.card}>
@@ -175,14 +186,7 @@ const BookingFormCard = ({
 								: t('common.createRental')}
 					</Button>
 					{isEditMode ? (
-						<Button
-							type='button'
-							variant='secondary'
-							onClick={() => {
-								reset(createDefaultValues(undefined, defaultAssetId, draftValues))
-								onCancelEdit()
-							}}
-						>
+						<Button type='button' variant='secondary' onClick={handleCancel}>
 							{t('common.close')}
 						</Button>
 					) : null}

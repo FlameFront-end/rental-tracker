@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { useConfirm } from '@/app/confirm/use-confirm'
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
 import type { Booking } from '@/shared/api/services/bookings'
 import type { DashboardBookingItem } from '@/shared/api/services/dashboard'
 import { useDashboardSummaryQuery } from '@/shared/api/services/dashboard'
@@ -27,6 +28,7 @@ const DashboardPage = () => {
 	const navigate = useNavigate()
 	const confirm = useConfirm()
 	const { t } = useI18n()
+	const { error: hapticError, success } = useTelegramHaptics()
 	const { data: notificationsStatus, isLoading: isNotificationsLoading } =
 		useNotificationsStatusQuery()
 	const {
@@ -61,7 +63,9 @@ const DashboardPage = () => {
 
 		try {
 			await deleteBooking.mutateAsync(booking.id)
+			success()
 		} catch (deleteError) {
+			hapticError()
 			setListError(
 				getApiErrorMessage(
 					deleteError,
@@ -79,7 +83,9 @@ const DashboardPage = () => {
 				bookingId: booking.id,
 				status: booking.status === 'paid' ? 'pending' : 'paid'
 			})
+			success()
 		} catch (statusError) {
+			hapticError()
 			setListError(
 				getApiErrorMessage(
 					statusError,

@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom'
 
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useAuthSession } from '@/app/session/use-auth-session'
+import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
 import { useTheme } from '@/app/theme/theme.context'
 import {
 	APP_LOCALES,
@@ -22,6 +23,7 @@ const Header = () => {
 	const { isTelegramEnvironment, profile, status, user } = useAuthSession()
 	const { locale, setLocale, t } = useI18n()
 	const { theme, toggleTheme } = useTheme()
+	const { selectionChanged } = useTelegramHaptics()
 	const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false)
 	const isWorkspaceRoute =
 		status === 'authenticated' && location.pathname !== ROUTES.AUTH
@@ -44,6 +46,9 @@ const Header = () => {
 	)
 
 	const handleSelectLocale = (nextLocale: AppLocale) => {
+		if (nextLocale !== locale) {
+			selectionChanged()
+		}
 		setLocale(nextLocale)
 		setIsLanguageSheetOpen(false)
 	}
@@ -76,7 +81,10 @@ const Header = () => {
 						<button
 							type='button'
 							className={styles.control}
-							onClick={toggleTheme}
+							onClick={() => {
+								selectionChanged()
+								toggleTheme()
+							}}
 							aria-label={
 								theme === 'dark'
 									? t('header.switchToLightTheme')

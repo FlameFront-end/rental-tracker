@@ -33,7 +33,11 @@ export const ruTranslations: TranslationDictionary = {
 	'common.close': 'Закрыть',
 	'common.clear': 'Сбросить',
 	'common.keep': 'Оставить',
+	'common.discard': 'Сбросить',
 	'common.delete': 'Удалить',
+	'common.unsavedChangesTitle': 'Закрыть без сохранения?',
+	'common.unsavedChangesDescription':
+		'Есть несохранённые изменения. Если закрыть сейчас, они будут потеряны.',
 	'common.save': 'Сохранить',
 	'common.saving': 'Сохранение...',
 	'common.creating': 'Создание...',

@@ -20,7 +20,11 @@ export const idTranslations: TranslationDictionary = {
 	'common.close': 'Tutup',
 	'common.clear': 'Reset',
 	'common.keep': 'Batalkan',
+	'common.discard': 'Buang',
 	'common.delete': 'Hapus',
+	'common.unsavedChangesTitle': 'Tutup tanpa menyimpan?',
+	'common.unsavedChangesDescription':
+		'Ada perubahan yang belum disimpan. Jika ditutup sekarang, perubahannya akan hilang.',
 	'common.save': 'Simpan',
 	'common.saving': 'Menyimpan...',
 	'common.creating': 'Membuat...',

@@ -21,7 +21,11 @@ export const enTranslations: TranslationDictionary = {
 	'common.close': 'Close',
 	'common.clear': 'Clear',
 	'common.keep': 'Keep',
+	'common.discard': 'Discard',
 	'common.delete': 'Delete',
+	'common.unsavedChangesTitle': 'Discard unsaved changes?',
+	'common.unsavedChangesDescription':
+		'You have changes that are not saved yet. If you close now, they will be lost.',
 	'common.save': 'Save',
 	'common.saving': 'Saving...',
 	'common.creating': 'Creating...',

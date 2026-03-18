@@ -15,6 +15,7 @@ import {
 import clsx from 'clsx'
 
 import { useI18n } from '@/app/i18n/use-i18n'
+import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
 
 import styles from './SelectField.module.scss'
 
@@ -96,6 +97,7 @@ const SelectField = forwardRef<HTMLInputElement, SelectFieldProps>(
 		ref
 	) => {
 		const { t } = useI18n()
+		const { selectionChanged } = useTelegramHaptics()
 		const helperText = error || hint
 		const generatedId = useId()
 		const inputId = id ?? `select-field-${generatedId}`
@@ -193,6 +195,10 @@ const SelectField = forwardRef<HTMLInputElement, SelectFieldProps>(
 		const handleSelect = (nextValue: string) => {
 			if (disabled) {
 				return
+			}
+
+			if (nextValue !== normalizedValue) {
+				selectionChanged()
 			}
 
 			if (value === undefined) {
