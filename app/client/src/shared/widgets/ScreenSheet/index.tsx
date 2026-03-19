@@ -19,13 +19,20 @@ interface ScreenSheetProps extends PropsWithChildren {
 	onClose: () => void
 	open: boolean
 	showCloseButton?: boolean
+	swipeToClose?: boolean
 }
 
 const SWIPE_CLOSE_DISTANCE_PX = 120
 const SWIPE_CLOSE_VELOCITY = 0.6
 const SWIPE_START_TOLERANCE_PX = 10
 
-const ScreenSheet = ({ children, onClose, open, showCloseButton = true }: ScreenSheetProps) => {
+const ScreenSheet = ({
+	children,
+	onClose,
+	open,
+	showCloseButton = true,
+	swipeToClose = true
+}: ScreenSheetProps) => {
 	const { t } = useI18n()
 	const bodyRef = useRef<HTMLDivElement | null>(null)
 	const touchGestureRef = useRef({
@@ -64,6 +71,15 @@ const ScreenSheet = ({ children, onClose, open, showCloseButton = true }: Screen
 		}
 	}, [open])
 
+	useEffect(() => {
+		if (swipeToClose) {
+			return
+		}
+
+		setDragOffset(0)
+		setIsDragging(false)
+	}, [swipeToClose])
+
 	if (!open) {
 		return null
 	}
@@ -73,6 +89,10 @@ const ScreenSheet = ({ children, onClose, open, showCloseButton = true }: Screen
 	}
 
 	const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
+		if (!swipeToClose) {
+			return
+		}
+
 		const touch = event.touches[0]
 		const targetNode = event.target as Node | null
 		const startedOutsideScrollBody = targetNode ? !bodyRef.current?.contains(targetNode) : false
@@ -90,6 +110,10 @@ const ScreenSheet = ({ children, onClose, open, showCloseButton = true }: Screen
 	}
 
 	const handleTouchMove = (event: TouchEvent<HTMLElement>) => {
+		if (!swipeToClose) {
+			return
+		}
+
 		const gesture = touchGestureRef.current
 
 		if (!gesture.canDrag) {
@@ -132,6 +156,12 @@ const ScreenSheet = ({ children, onClose, open, showCloseButton = true }: Screen
 	}
 
 	const handleTouchEnd = () => {
+		if (!swipeToClose) {
+			resetSwipeState()
+			setDragOffset(0)
+			return
+		}
+
 		const gesture = touchGestureRef.current
 
 		if (!gesture.isDragging) {

@@ -286,7 +286,12 @@ const DateField = ({
 				</span>
 			) : null}
 
-			<ScreenSheet open={isPickerOpen} onClose={closePicker} showCloseButton={false}>
+			<ScreenSheet
+				open={isPickerOpen}
+				onClose={closePicker}
+				showCloseButton={false}
+				swipeToClose={false}
+			>
 				<div className={styles.sheetContent}>
 					<div className={styles.sheetTopBar}>
 						<button type='button' className={styles.sheetAction} onClick={closePicker}>
