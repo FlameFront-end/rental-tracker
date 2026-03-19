@@ -24,6 +24,7 @@ export const idTranslations: TranslationDictionary = {
 	'common.keep': 'Batalkan',
 	'common.discard': 'Buang',
 	'common.delete': 'Hapus',
+	'common.edit': 'Ubah',
 	'common.unsavedChangesTitle': 'Tutup tanpa menyimpan?',
 	'common.unsavedChangesDescription':
 		'Ada perubahan yang belum disimpan. Jika ditutup sekarang, perubahannya akan hilang.',
@@ -225,6 +226,7 @@ export const idTranslations: TranslationDictionary = {
 		'Mulai dengan menambahkan motor. Setiap sewa akan terhubung ke salah satu motor di armada Anda.',
 	'assets.emptyAction': 'Tambah motor pertama',
 	'assetCard.updated': ({ date }) => `Siap disewa, diperbarui ${date}`,
+	'assetCard.updatedShort': ({ date }) => `Diperbarui ${date}`,
 	'assetCard.available': 'Tersedia',
 	'assetCard.edit': 'Edit motor',
 	'assetCard.editing': 'Sedang mengedit motor',

@@ -37,6 +37,7 @@ export const ruTranslations: TranslationDictionary = {
 	'common.keep': 'Оставить',
 	'common.discard': 'Сбросить',
 	'common.delete': 'Удалить',
+	'common.edit': 'Изменить',
 	'common.unsavedChangesTitle': 'Закрыть без сохранения?',
 	'common.unsavedChangesDescription':
 		'Есть несохранённые изменения. Если закрыть сейчас, они будут потеряны.',
@@ -237,6 +238,7 @@ export const ruTranslations: TranslationDictionary = {
 		'Сначала добавьте байк. Каждая аренда привязывается к байку из вашего парка.',
 	'assets.emptyAction': 'Добавить первый байк',
 	'assetCard.updated': ({ date }) => `Готов к аренде, обновлено ${date}`,
+	'assetCard.updatedShort': ({ date }) => `Обновлено ${date}`,
 	'assetCard.available': 'Доступен',
 	'assetCard.edit': 'Редактировать байк',
 	'assetCard.editing': 'Редактирование байка',

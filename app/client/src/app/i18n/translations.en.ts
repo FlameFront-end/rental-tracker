@@ -25,6 +25,7 @@ export const enTranslations: TranslationDictionary = {
 	'common.keep': 'Keep',
 	'common.discard': 'Discard',
 	'common.delete': 'Delete',
+	'common.edit': 'Edit',
 	'common.unsavedChangesTitle': 'Discard unsaved changes?',
 	'common.unsavedChangesDescription':
 		'You have changes that are not saved yet. If you close now, they will be lost.',
@@ -224,6 +225,7 @@ export const enTranslations: TranslationDictionary = {
 		'Start by adding a bike. Every rental is tied to a bike in your fleet.',
 	'assets.emptyAction': 'Add first bike',
 	'assetCard.updated': ({ date }) => `Ready for booking, updated ${date}`,
+	'assetCard.updatedShort': ({ date }) => `Updated ${date}`,
 	'assetCard.available': 'Available',
 	'assetCard.edit': 'Edit bike',
 	'assetCard.editing': 'Editing bike',
