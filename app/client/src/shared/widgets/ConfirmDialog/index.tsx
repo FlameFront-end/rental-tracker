@@ -8,6 +8,7 @@ import {
 import { createPortal } from 'react-dom'
 
 import { useI18n } from '@/app/i18n/use-i18n'
+import { lockDocumentScroll } from '@/shared/lib/document-scroll-lock'
 import { Button } from '@/shared/kit'
 
 import styles from './ConfirmDialog.module.scss'
@@ -43,10 +44,7 @@ const ConfirmDialog = ({
 			return
 		}
 
-		const { body } = document
-		const previousOverflow = body.style.overflow
-
-		body.style.overflow = 'hidden'
+		const unlockScroll = lockDocumentScroll()
 
 		const focusFrame = window.requestAnimationFrame(() => {
 			confirmButtonRef.current?.focus()
@@ -61,7 +59,7 @@ const ConfirmDialog = ({
 		document.addEventListener('keydown', handleKeyDown)
 
 		return () => {
-			body.style.overflow = previousOverflow
+			unlockScroll()
 			window.cancelAnimationFrame(focusFrame)
 			document.removeEventListener('keydown', handleKeyDown)
 		}

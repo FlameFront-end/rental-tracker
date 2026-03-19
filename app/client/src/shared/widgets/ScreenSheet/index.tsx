@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom'
 
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
+import { lockDocumentScroll } from '@/shared/lib/document-scroll-lock'
 
 import styles from './ScreenSheet.module.scss'
 
@@ -54,14 +55,7 @@ const ScreenSheet = ({
 			return
 		}
 
-		const { body } = document
-		const previousOverflow = body.style.overflow
-
-		body.style.overflow = 'hidden'
-
-		return () => {
-			body.style.overflow = previousOverflow
-		}
+		return lockDocumentScroll()
 	}, [open])
 
 	useEffect(() => {
