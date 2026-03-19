@@ -173,7 +173,7 @@ const SettingsPage = () => {
 
       const message = t('dashboard.remindersAccessDeclined')
       setRemindersError(message)
-      toast.info(message)
+      toast.warning(message)
     } catch (requestError) {
       hapticError()
       const message = getApiErrorMessage(
@@ -206,7 +206,6 @@ const SettingsPage = () => {
           [field]: value
         })
         success()
-        toast.success(t('settings.toastNotificationsSaved'))
       } catch (updateError) {
         hapticError()
         const message = getApiErrorMessage(

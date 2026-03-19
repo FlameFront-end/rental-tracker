@@ -188,7 +188,6 @@ const AssetsPage = () => {
       setIsComposerOpen(false)
       setFormResetVersion((current) => current + 1)
       success()
-      toast.success(t('assets.toastSaved'))
     } catch (submitError) {
       hapticError()
       const message = getApiErrorMessage(submitError, t('assets.errorSave'))
@@ -225,15 +224,15 @@ const AssetsPage = () => {
         setFormResetVersion((current) => current + 1)
       }
       success()
-      toast.success(
-        t(
-          deleteResult.archivedOnly
-            ? 'assets.toastArchived'
-            : deleteResult.removedRelatedBookings
-              ? 'assets.toastDeletedWithBookings'
-              : 'assets.toastDeleted'
+      if (deleteResult.archivedOnly || deleteResult.removedRelatedBookings) {
+        toast.success(
+          t(
+            deleteResult.archivedOnly
+              ? 'assets.toastArchived'
+              : 'assets.toastDeletedWithBookings'
+          )
         )
-      )
+      }
     } catch (deleteError) {
       const conflictDetails = getDeleteAssetConflictDetails(deleteError)
 

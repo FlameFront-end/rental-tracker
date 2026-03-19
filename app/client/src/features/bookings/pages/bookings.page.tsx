@@ -536,7 +536,6 @@ const BookingsPage = () => {
       setIsComposerOpen(false)
       clearBookingSearchParams()
       success()
-      toast.success(t('bookings.toastSaved'))
     } catch (submitError) {
       hapticError()
       const message = getApiErrorMessage(submitError, t('bookings.errorSave'))
@@ -571,7 +570,6 @@ const BookingsPage = () => {
         clearBookingSearchParams()
       }
       success()
-      toast.success(t('bookings.toastDeleted'))
     } catch (deleteError) {
       hapticError()
       const message = getApiErrorMessage(deleteError, t('bookings.errorDelete'))
@@ -589,13 +587,6 @@ const BookingsPage = () => {
         status: booking.status === 'paid' ? 'pending' : 'paid'
       })
       success()
-      toast.success(
-        t(
-          booking.status === 'paid'
-            ? 'bookings.toastStatusPending'
-            : 'bookings.toastStatusPaid'
-        )
-      )
     } catch (statusError) {
       hapticError()
       const message = getApiErrorMessage(statusError, t('bookings.errorStatus'))
