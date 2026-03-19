@@ -62,6 +62,10 @@ export class AuthService {
     return this.usersService.findByIdOrFail(userId);
   }
 
+  activateTrial(userId: string) {
+    return this.usersService.activateTrial(userId);
+  }
+
   private async buildAuthResponse(
     userId: string,
     telegramId: string,

@@ -16,6 +16,10 @@ import {
 	type AuthSessionContextValue,
 	type AuthSessionStatus
 } from '@/app/session/auth-session.context'
+import {
+	hasActiveSubscriptionAccess,
+	resolveAuthSubscriptionState
+} from '@/app/session/subscription'
 import { useI18n } from '@/app/i18n/use-i18n'
 import {
 	authKeys,
@@ -89,6 +93,15 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 
 	const isTelegramEnvironment = Boolean(rawInitData)
 	const canUseDevelopmentLogin = !isTelegramEnvironment && Boolean(env.DEV_TELEGRAM_ID)
+	const applyCurrentUser = useCallback(
+		(nextUser: AuthUser) => {
+			queryClient.setQueryData(authKeys.me(), nextUser)
+			setUser(nextUser)
+			setError(null)
+			setStatus('authenticated')
+		},
+		[queryClient]
+	)
 	const profile = useMemo<AuthSessionProfile | null>(() => {
 		const telegramUser = parseTelegramInitDataUser(rawInitData)
 		const displayName =
@@ -111,12 +124,9 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 	const applyAuthenticatedState = useCallback(
 		(authResponse: AuthResponse) => {
 			setAccessToken(authResponse.accessToken)
-			queryClient.setQueryData(authKeys.me(), authResponse.user)
-			setUser(authResponse.user)
-			setError(null)
-			setStatus('authenticated')
+			applyCurrentUser(authResponse.user)
 		},
-		[queryClient]
+		[applyCurrentUser]
 	)
 
 	const resetSession = useCallback(
@@ -196,6 +206,15 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 		[applyAuthenticatedState, resetSession, t]
 	)
 
+	const subscriptionState = useMemo(
+		() => resolveAuthSubscriptionState(user),
+		[user]
+	)
+	const hasSubscriptionAccess = useMemo(
+		() => hasActiveSubscriptionAccess(subscriptionState),
+		[subscriptionState]
+	)
+
 	useEffect(() => {
 		if (bootstrapStartedRef.current) {
 			return
@@ -210,10 +229,7 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 				try {
 					const currentUser = await getMe()
 
-					queryClient.setQueryData(authKeys.me(), currentUser)
-					setUser(currentUser)
-					setError(null)
-					setStatus('authenticated')
+					applyCurrentUser(currentUser)
 
 					return
 				} catch {
@@ -240,27 +256,41 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 		}
 
 		void bootstrapSession()
-	}, [loginForDev, loginWithTelegramInitData, queryClient, rawInitData, resetSession, t])
+	}, [
+		applyCurrentUser,
+		loginForDev,
+		loginWithTelegramInitData,
+		queryClient,
+		rawInitData,
+		resetSession,
+		t
+	])
 
 	const value = useMemo<AuthSessionContextValue>(
 		() => ({
 			canUseDevelopmentLogin,
 			error,
+			hasSubscriptionAccess,
 			isTelegramEnvironment,
 			loginForDev,
 			loginWithTelegramInitData,
 			profile,
 			status,
+			subscriptionState,
+			updateCurrentUser: applyCurrentUser,
 			user
 		}),
 		[
 			canUseDevelopmentLogin,
 			error,
+			hasSubscriptionAccess,
 			isTelegramEnvironment,
 			loginForDev,
 			loginWithTelegramInitData,
 			profile,
 			status,
+			subscriptionState,
+			applyCurrentUser,
 			user
 		]
 	)

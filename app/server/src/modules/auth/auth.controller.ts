@@ -50,4 +50,14 @@ export class AuthController {
   getMe(@CurrentUser() user: RequestUser) {
     return this.authService.getMe(user.userId);
   }
+
+  @Post('trial')
+  @UseGuards(AccessTokenGuard)
+  @ApiAccessTokenAuth()
+  @ApiOkResponse({
+    type: UserEntity,
+  })
+  activateTrial(@CurrentUser() user: RequestUser) {
+    return this.authService.activateTrial(user.userId);
+  }
 }

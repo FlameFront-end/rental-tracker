@@ -6,7 +6,7 @@ import { FullScreenLoader } from '@/shared/widgets'
 
 export const ProtectedRoute = () => {
 	const location = useLocation()
-	const { status } = useAuthSession()
+	const { hasSubscriptionAccess, status } = useAuthSession()
 
 	if (status === 'bootstrapping') {
 		return <FullScreenLoader />
@@ -22,6 +22,10 @@ export const ProtectedRoute = () => {
 				}}
 			/>
 		)
+	}
+
+	if (!hasSubscriptionAccess && location.pathname !== ROUTES.SUBSCRIPTION) {
+		return <Navigate to={ROUTES.SUBSCRIPTION} replace />
 	}
 
 	return <Outlet />

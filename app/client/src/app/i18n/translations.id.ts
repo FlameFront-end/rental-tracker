@@ -74,6 +74,48 @@ export const idTranslations: TranslationDictionary = {
 	'auth.error.unauthenticated':
 		'Buka aplikasi di dalam Telegram atau gunakan login development lokal.',
 	'auth.error.authenticationFailed': 'Autentikasi gagal. Coba lagi.',
+	'subscription.title.page': 'Langganan',
+	'subscription.subtitle.page': 'Aktifkan akses dan lanjutkan kerja di aplikasi.',
+	'subscription.eyebrow.welcome': 'Trial gratis',
+	'subscription.eyebrow.trialExpired': 'Masa trial selesai',
+	'subscription.eyebrow.subscriptionExpired': 'Langganan selesai',
+	'subscription.title.welcome': 'Mulai dengan 7 hari gratis',
+	'subscription.title.trialExpired': 'Akses trial sudah berakhir',
+	'subscription.title.subscriptionExpired': 'Akses langganan sudah berakhir',
+	'subscription.description.welcome':
+		'Coba aplikasi gratis selama 7 hari. Anda akan mendapat dashboard, sewa, kalender, dan pengingat.',
+	'subscription.description.trialExpired':
+		'Untuk membuka kembali dashboard, sewa, dan kalender, beli langganan lewat Telegram.',
+	'subscription.description.subscriptionExpired':
+		'Untuk mengembalikan akses ke aplikasi, perpanjang langganan lewat Telegram.',
+	'subscription.hero.rentalsTitle': 'Sewa',
+	'subscription.hero.rentalsDescription': 'Klien, tanggal, dan status pembayaran.',
+	'subscription.hero.calendarTitle': 'Kalender',
+	'subscription.hero.calendarDescription': 'Lihat motor yang kosong atau sedang dipakai.',
+	'subscription.hero.remindersTitle': 'Pengingat',
+	'subscription.hero.remindersDescription': 'Pengembalian dan jatuh tempo di Telegram.',
+	'subscription.value.eyebrow': 'Yang Anda dapat',
+	'subscription.value.title': 'Operasional rental tanpa spreadsheet',
+	'subscription.value.description':
+		'Rental Tracker merangkum workflow rental harian ke dalam satu alur Telegram yang cepat.',
+	'subscription.feature.overview':
+		'Pengembalian, pembayaran, dan rental prioritas langsung muncul di ringkasan.',
+	'subscription.feature.fleet': 'Armada dan rental aktif tetap ada di satu tempat.',
+	'subscription.feature.calendar':
+		'Kalender okupansi mingguan tanpa banyak pindah layar.',
+	'subscription.feature.reminders':
+		'Pengingat Telegram untuk jatuh tempo dan pengembalian.',
+	'subscription.offer.title.trial': 'Trial gratis',
+	'subscription.offer.title.purchase': 'Langganan',
+	'subscription.offer.description.trial':
+		'Trial hanya bisa diaktifkan sekali. Setelah itu aplikasi langsung terbuka.',
+	'subscription.offer.description.purchase':
+		'Tombol ini akan membuka chat Telegram untuk proses pembayaran.',
+	'subscription.offer.expiredAt': ({ date }) => `Akses berakhir pada ${date}.`,
+	'subscription.cta.startTrial': 'Mulai trial gratis',
+	'subscription.cta.activatingTrial': 'Memulai trial...',
+	'subscription.cta.buy': 'Buka Telegram untuk bayar',
+	'subscription.error.activateTrial': 'Gagal mengaktifkan trial gratis. Coba lagi.',
 	'dashboard.title': 'Ringkasan',
 	'dashboard.subtitle': 'Pengembalian, pembayaran, dan pengingat untuk beberapa hari ke depan.',
 	'dashboard.checkingReminders': 'Memeriksa status pengingat',

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   Column,
   CreateDateColumn,
@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 
 import { AssetEntity } from '../../assets/entities/asset.entity';
+import { UserSubscriptionStatus } from '../enums/user-subscription-status.enum';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -33,6 +34,31 @@ export class UserEntity {
     type: 'timestamptz',
   })
   createdAt!: Date;
+
+  @ApiProperty({
+    enum: UserSubscriptionStatus,
+    example: UserSubscriptionStatus.NONE,
+  })
+  @Column({
+    name: 'subscription_status',
+    type: 'enum',
+    enum: UserSubscriptionStatus,
+    enumName: 'user_subscription_status_enum',
+    default: UserSubscriptionStatus.NONE,
+  })
+  subscriptionStatus!: UserSubscriptionStatus;
+
+  @ApiPropertyOptional({
+    example: '2026-03-26T11:15:00.000Z',
+    format: 'date-time',
+    nullable: true,
+  })
+  @Column({
+    name: 'subscription_ends_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  subscriptionEndsAt!: Date | null;
 
   @ApiProperty({
     example: true,

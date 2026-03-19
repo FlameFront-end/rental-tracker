@@ -18,6 +18,7 @@ const AuthPage = () => {
 	const {
 		canUseDevelopmentLogin,
 		error,
+		hasSubscriptionAccess,
 		isTelegramEnvironment,
 		loginForDev,
 		loginWithTelegramInitData,
@@ -29,10 +30,12 @@ const AuthPage = () => {
 		return (
 			<Navigate
 				to={
-					getSafeRedirectTarget(location.state?.from) ??
-					getStartAppTarget() ??
-					getStoredLastRoute() ??
-					ROUTES.DASHBOARD
+					hasSubscriptionAccess
+						? getSafeRedirectTarget(location.state?.from) ??
+							getStartAppTarget() ??
+							getStoredLastRoute() ??
+							ROUTES.DASHBOARD
+						: ROUTES.SUBSCRIPTION
 				}
 				replace
 			/>

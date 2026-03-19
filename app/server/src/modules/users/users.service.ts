@@ -10,6 +10,10 @@ import { isPostgresError } from '../../common/utils/database-error.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
+import { UserSubscriptionStatus } from './enums/user-subscription-status.enum';
+
+const TRIAL_DURATION_DAYS = 7;
+const MS_IN_DAY = 1000 * 60 * 60 * 24;
 
 @Injectable()
 export class UsersService {
@@ -104,5 +108,25 @@ export class UsersService {
 
       throw error;
     }
+  }
+
+  async activateTrial(userId: string) {
+    const user = await this.findByIdOrFail(userId);
+
+    if (user.subscriptionStatus !== UserSubscriptionStatus.NONE) {
+      throw new ConflictException(
+        'Free trial has already been activated for this user.',
+      );
+    }
+
+    const subscriptionEndsAt = new Date(
+      Date.now() + TRIAL_DURATION_DAYS * MS_IN_DAY,
+    );
+    const nextUser = this.usersRepository.merge(user, {
+      subscriptionEndsAt,
+      subscriptionStatus: UserSubscriptionStatus.TRIAL,
+    });
+
+    return this.usersRepository.save(nextUser);
   }
 }

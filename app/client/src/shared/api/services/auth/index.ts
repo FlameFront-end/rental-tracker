@@ -1,4 +1,5 @@
 export {
+	activateTrialSubscription,
 	authKeys,
 	getMe,
 	loginForDevelopment,
@@ -10,6 +11,7 @@ export {
 export type {
 	AuthResponse,
 	AuthUser,
+	AuthUserSubscriptionStatus,
 	DevLoginPayload,
 	TelegramAuthPayload
 } from './auth.api'

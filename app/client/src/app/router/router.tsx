@@ -11,6 +11,7 @@ import DashboardPage from '@/features/dashboard/pages/dashboard.page'
 import ErrorPage from '@/features/error/pages/error.page'
 import NotFoundPage from '@/features/not-found/pages/not-found.page'
 import SettingsPage from '@/features/settings/pages/settings.page'
+import SubscriptionPage from '@/features/subscription/pages/subscription.page'
 import { ROUTES } from '@/shared/model/routes'
 
 export const router = createBrowserRouter([
@@ -29,6 +30,10 @@ export const router = createBrowserRouter([
 			{
 				element: <ProtectedRoute />,
 				children: [
+					{
+						path: ROUTES.SUBSCRIPTION,
+						element: <SubscriptionPage />
+					},
 					{
 						path: ROUTES.DASHBOARD,
 						element: <DashboardPage />

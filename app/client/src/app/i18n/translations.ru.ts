@@ -87,6 +87,47 @@ export const ruTranslations: TranslationDictionary = {
 	'auth.error.unauthenticated':
 		'Откройте приложение в Telegram или используйте локальный dev-вход.',
 	'auth.error.authenticationFailed': 'Не удалось войти. Попробуйте ещё раз.',
+	'subscription.title.page': 'Подписка',
+	'subscription.subtitle.page': 'Оформите доступ и продолжайте работать в приложении.',
+	'subscription.eyebrow.welcome': 'Бесплатный пробный период',
+	'subscription.eyebrow.trialExpired': 'Пробный период закончился',
+	'subscription.eyebrow.subscriptionExpired': 'Подписка закончилась',
+	'subscription.title.welcome': 'Начните с 7 бесплатных дней',
+	'subscription.title.trialExpired': 'Пробный доступ закончился',
+	'subscription.title.subscriptionExpired': 'Доступ по подписке закончился',
+	'subscription.description.welcome':
+		'Попробуйте приложение бесплатно 7 дней. Будут доступны дашборд, аренды, календарь и напоминания.',
+	'subscription.description.trialExpired':
+		'Чтобы снова открыть дашборд, аренды и календарь, оформите подписку через Telegram.',
+	'subscription.description.subscriptionExpired':
+		'Чтобы вернуть доступ к приложению, продлите подписку через Telegram.',
+	'subscription.hero.rentalsTitle': 'Аренды',
+	'subscription.hero.rentalsDescription': 'Клиенты, даты и статус оплаты.',
+	'subscription.hero.calendarTitle': 'Календарь',
+	'subscription.hero.calendarDescription': 'Какие байки заняты, а какие свободны.',
+	'subscription.hero.remindersTitle': 'Напоминания',
+	'subscription.hero.remindersDescription': 'Возвраты и сроки в Telegram.',
+	'subscription.value.eyebrow': 'Что внутри',
+	'subscription.value.title': 'Управление арендой без таблиц',
+	'subscription.value.description':
+		'Rental Tracker собирает ежедневную операционку в один быстрый сценарий внутри Telegram.',
+	'subscription.feature.overview':
+		'Возвраты, оплаты и приоритетные аренды сразу в обзоре.',
+	'subscription.feature.fleet': 'Парк байков и текущие аренды в одном месте.',
+	'subscription.feature.calendar': 'Недельный календарь занятости без лишних переключений.',
+	'subscription.feature.reminders': 'Telegram-напоминания по срокам и возвратам.',
+	'subscription.offer.title.trial': 'Пробный период',
+	'subscription.offer.title.purchase': 'Подписка',
+	'subscription.offer.description.trial':
+		'Пробный период можно включить один раз. После активации приложение сразу откроется.',
+	'subscription.offer.description.purchase':
+		'Кнопка откроет чат в Telegram для оплаты подписки.',
+	'subscription.offer.expiredAt': ({ date }) => `Доступ закончился ${date}.`,
+	'subscription.cta.startTrial': 'Начать пробный период',
+	'subscription.cta.activatingTrial': 'Запускаем пробный период...',
+	'subscription.cta.buy': 'Открыть Telegram для оплаты',
+	'subscription.error.activateTrial':
+		'Не удалось активировать пробный период. Попробуйте ещё раз.',
 	'dashboard.title': 'Обзор',
 	'dashboard.subtitle': 'Возвраты, оплаты и напоминания на ближайшие дни.',
 	'dashboard.checkingReminders': 'Проверяем статус напоминаний',

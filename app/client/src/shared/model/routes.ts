@@ -4,6 +4,7 @@ export const ROUTES = {
 	BOOKINGS: '/bookings',
 	CALENDAR: '/calendar',
 	DASHBOARD: '/dashboard',
+	SUBSCRIPTION: '/subscription',
 	SETTINGS: '/settings'
 } as const
 

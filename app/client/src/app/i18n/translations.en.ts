@@ -75,6 +75,47 @@ export const enTranslations: TranslationDictionary = {
 	'auth.error.unauthenticated':
 		'Open the app inside Telegram or use the local development login.',
 	'auth.error.authenticationFailed': 'Authentication failed. Please try again.',
+	'subscription.title.page': 'Subscription',
+	'subscription.subtitle.page': 'Activate access and continue working in the app.',
+	'subscription.eyebrow.welcome': 'Free trial',
+	'subscription.eyebrow.trialExpired': 'Trial expired',
+	'subscription.eyebrow.subscriptionExpired': 'Subscription expired',
+	'subscription.title.welcome': 'Start with 7 free days',
+	'subscription.title.trialExpired': 'Trial access has ended',
+	'subscription.title.subscriptionExpired': 'Subscription access has ended',
+	'subscription.description.welcome':
+		'Try the app free for 7 days. You will get the dashboard, rentals, calendar, and reminders.',
+	'subscription.description.trialExpired':
+		'To reopen the dashboard, rentals, and calendar, buy a subscription in Telegram.',
+	'subscription.description.subscriptionExpired':
+		'To restore access to the app, renew the subscription in Telegram.',
+	'subscription.hero.rentalsTitle': 'Rentals',
+	'subscription.hero.rentalsDescription': 'Clients, dates, and payment status.',
+	'subscription.hero.calendarTitle': 'Calendar',
+	'subscription.hero.calendarDescription': 'See which bikes are free or busy.',
+	'subscription.hero.remindersTitle': 'Reminders',
+	'subscription.hero.remindersDescription': 'Returns and due dates in Telegram.',
+	'subscription.value.eyebrow': 'What you get',
+	'subscription.value.title': 'Rental operations without spreadsheets',
+	'subscription.value.description':
+		'Rental Tracker keeps the daily rental workflow inside one fast Telegram scenario.',
+	'subscription.feature.overview':
+		'Returns, payments, and priority rentals surface in the overview first.',
+	'subscription.feature.fleet': 'Fleet and current rentals stay in one place.',
+	'subscription.feature.calendar': 'Weekly occupancy calendar without extra switching.',
+	'subscription.feature.reminders': 'Telegram reminders for due dates and returns.',
+	'subscription.offer.title.trial': 'Free trial',
+	'subscription.offer.title.purchase': 'Subscription',
+	'subscription.offer.description.trial':
+		'The trial can be activated once. After that, the app opens right away.',
+	'subscription.offer.description.purchase':
+		'The button opens a Telegram chat to arrange payment.',
+	'subscription.offer.expiredAt': ({ date }) => `Access ended on ${date}.`,
+	'subscription.cta.startTrial': 'Start free trial',
+	'subscription.cta.activatingTrial': 'Starting trial...',
+	'subscription.cta.buy': 'Open Telegram to pay',
+	'subscription.error.activateTrial':
+		'Failed to activate the free trial. Please try again.',
 	'dashboard.title': 'Overview',
 	'dashboard.subtitle': 'Returns, payments, and reminders for the next few days.',
 	'dashboard.checkingReminders': 'Checking reminder status',

@@ -2,10 +2,14 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import axiosInstance from '@/shared/api/axiosInstance'
 
+export type AuthUserSubscriptionStatus = 'none' | 'trial' | 'active'
+
 export interface AuthUser {
 	id: string
 	telegramId: string
 	createdAt: string
+	subscriptionEndsAt: string | null
+	subscriptionStatus: AuthUserSubscriptionStatus
 }
 
 export interface AuthResponse {
@@ -40,6 +44,12 @@ export const loginForDevelopment = async (payload: DevLoginPayload) => {
 
 export const getMe = async () => {
 	const { data } = await axiosInstance.get<AuthUser>('/auth/me')
+
+	return data
+}
+
+export const activateTrialSubscription = async () => {
+	const { data } = await axiosInstance.post<AuthUser>('/auth/trial')
 
 	return data
 }
