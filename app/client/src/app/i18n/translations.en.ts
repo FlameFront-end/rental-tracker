@@ -230,18 +230,22 @@ export const enTranslations: TranslationDictionary = {
   'assets.errorDelete': 'Failed to delete the bike. Please try again.',
   'assets.toastSaved': 'Bike saved.',
   'assets.toastDeleted': 'Bike deleted.',
+  'assets.toastArchived': 'Bike removed from the fleet. Rentals were kept.',
   'assets.toastDeletedWithBookings': 'Bike and related rentals deleted.',
   'assets.confirmDeleteTitle': 'Delete bike?',
   'assets.confirmDeleteDescription': ({ name }) =>
     `Delete "${name}" from the catalog? This cannot be undone.`,
-  'assets.confirmDeleteWithBookingsTitle': 'Delete bike with related rentals?',
+  'assets.confirmDeleteWithBookingsTitle': 'Bike is already in use',
   'assets.confirmDeleteWithBookingsDescription': ({
     activeOrFuture,
     name,
     total
   }) =>
-    `"${name}" is still used in ${pluralizeEn(Number(total ?? 0), 'related rental', 'related rentals')}. The bike cannot be deleted on its own because those rentals are linked to it directly.${Number(activeOrFuture ?? 0) > 0 ? ` ${pluralizeEn(Number(activeOrFuture ?? 0), 'active or upcoming rental still exists', 'active or upcoming rentals still exist')}.` : ''} If you continue, both the bike and all related rentals will be deleted.`,
+    `"${name}" is linked to ${pluralizeEn(Number(total ?? 0), 'rental', 'rentals')}.${Number(activeOrFuture ?? 0) > 0 ? ' There are active or upcoming rentals.' : ''} What do you want to delete?`,
+  'assets.confirmDeleteBikeOnlyAction': 'Delete bike',
   'assets.confirmDeleteWithBookingsAction': 'Delete all',
+  'assets.deleteBikeOnlyUnavailable':
+    'The bike cannot be deleted on its own while rentals are still linked to it.',
   'assets.emptyTitle': 'Add your first bike',
   'assets.emptyDescription':
     'Start by adding a bike. Every rental is tied to a bike in your fleet.',

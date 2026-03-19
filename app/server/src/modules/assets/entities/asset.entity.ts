@@ -40,6 +40,16 @@ export class AssetEntity {
   })
   name!: string;
 
+  @ApiProperty({
+    example: false,
+  })
+  @Column({
+    name: 'is_archived',
+    type: 'boolean',
+    default: false,
+  })
+  isArchived!: boolean;
+
   @ApiProperty()
   @CreateDateColumn({
     name: 'created_at',

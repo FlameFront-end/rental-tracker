@@ -29,7 +29,7 @@ export class BookingsService {
   ) {}
 
   async create(userId: string, dto: CreateBookingDto) {
-    await this.assetsService.findOwnedAssetOrFail(userId, dto.assetId);
+    await this.assetsService.findOwnedActiveAssetOrFail(userId, dto.assetId);
 
     const startDate = normalizeDateOnly(dto.startDate, 'startDate');
     const endDate = normalizeDateOnly(dto.endDate, 'endDate');
@@ -104,7 +104,7 @@ export class BookingsService {
     const nextAssetId = dto.assetId ?? booking.assetId;
 
     if (nextAssetId !== booking.assetId) {
-      await this.assetsService.findOwnedAssetOrFail(userId, nextAssetId);
+      await this.assetsService.findOwnedActiveAssetOrFail(userId, nextAssetId);
     }
 
     const startDate = normalizeDateOnly(

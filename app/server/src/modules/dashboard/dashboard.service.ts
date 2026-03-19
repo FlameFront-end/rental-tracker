@@ -49,6 +49,7 @@ export class DashboardService {
       await Promise.all([
         this.assetsRepository.count({
           where: {
+            isArchived: false,
             userId,
           },
         }),
@@ -93,6 +94,7 @@ export class DashboardService {
     const [bikes, bookings] = await Promise.all([
       this.assetsRepository.find({
         where: {
+          isArchived: false,
           userId,
         },
         order: {

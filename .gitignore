@@ -3,6 +3,7 @@ dist/
 coverage/
 .tmp/
 .DS_Store
+*.tsbuildinfo
 
 app/client/node_modules/
 app/client/dist/

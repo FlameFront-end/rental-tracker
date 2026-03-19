@@ -1,27 +1,34 @@
 import { createContext, useContext } from 'react'
 
 export type ConfirmTone = 'default' | 'danger'
+export type ConfirmChoiceResult = 'cancel' | 'confirm' | 'secondary'
 
 export interface ConfirmOptions {
-	cancelText?: string
-	confirmText?: string
-	description?: string
-	title: string
-	tone?: ConfirmTone
+  cancelText?: string
+  confirmText?: string
+  description?: string
+  title: string
+  tone?: ConfirmTone
+}
+
+export interface ConfirmChoiceOptions extends ConfirmOptions {
+  secondaryText: string
+  secondaryTone?: ConfirmTone
 }
 
 export interface ConfirmContextValue {
-	confirm: (options: ConfirmOptions) => Promise<boolean>
+  confirm: (options: ConfirmOptions) => Promise<boolean>
+  confirmChoice: (options: ConfirmChoiceOptions) => Promise<ConfirmChoiceResult>
 }
 
 export const ConfirmContext = createContext<ConfirmContextValue | null>(null)
 
 export const useConfirmContext = () => {
-	const context = useContext(ConfirmContext)
+  const context = useContext(ConfirmContext)
 
-	if (!context) {
-		throw new Error('useConfirm must be used within ConfirmProvider.')
-	}
+  if (!context) {
+    throw new Error('useConfirm must be used within ConfirmProvider.')
+  }
 
-	return context
+  return context
 }

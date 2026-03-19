@@ -25,30 +25,33 @@ export class AllExceptionsFilter implements ExceptionFilter {
       exception instanceof HttpException
         ? exception.getResponse()
         : 'Internal server error';
-
-    const message = this.extractMessage(payload);
+    const responsePayload = this.buildResponsePayload(payload);
 
     if (!(exception instanceof HttpException)) {
       this.logger.error(exception);
     }
 
     response.status(status).json({
+      ...responsePayload,
       statusCode: status,
-      message,
       timestamp: new Date().toISOString(),
       path: request.url,
     });
   }
 
-  private extractMessage(payload: string | object) {
+  private buildResponsePayload(payload: string | object) {
     if (typeof payload === 'string') {
-      return payload;
+      return {
+        message: payload,
+      };
     }
 
     if ('message' in payload) {
-      return payload.message;
+      return payload;
     }
 
-    return 'Unexpected error';
+    return {
+      message: 'Unexpected error',
+    };
   }
 }

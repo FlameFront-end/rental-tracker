@@ -8,6 +8,7 @@ import { AddUserSubscription1711224000000 } from './migrations/1711224000000-add
 import { AddSubscriptionNotificationDeliveries1711310400000 } from './migrations/1711310400000-add-subscription-notification-deliveries';
 import { AddUserLocale1711314000000 } from './migrations/1711314000000-add-user-locale';
 import { AddUserAdminFields1711400000000 } from './migrations/1711400000000-add-user-admin-fields';
+import { AddAssetArchiveFlag1711486400000 } from './migrations/1711486400000-add-asset-archive-flag';
 import { AssetEntity } from '../modules/assets/entities/asset.entity';
 import { BookingEntity } from '../modules/bookings/entities/booking.entity';
 import { NotificationDeliveryEntity } from '../modules/notifications/entities/notification-delivery.entity';
@@ -30,6 +31,7 @@ export const databaseMigrations = [
   AddSubscriptionNotificationDeliveries1711310400000,
   AddUserLocale1711314000000,
   AddUserAdminFields1711400000000,
+  AddAssetArchiveFlag1711486400000,
 ];
 
 export function buildDataSourceOptions(): DataSourceOptions {

@@ -20,6 +20,11 @@ const API_ERROR_TRANSLATIONS: Record<string, Record<AppLocale, string>> = {
     ru: 'Для доступа администратора нужна авторизация.',
     id: 'Akses admin memerlukan otorisasi.'
   },
+  'Archived assets cannot be used for new bookings.': {
+    en: 'This bike is no longer available for new rentals.',
+    ru: 'Этот байк больше недоступен для новых аренд.',
+    id: 'Motor ini sudah tidak tersedia untuk sewa baru.'
+  },
   'Asset cannot be removed because booking history still exists.': {
     en: 'This bike cannot be removed until related rental history is handled.',
     ru: 'Этот байк нельзя удалить, пока с ним связана история аренд.',

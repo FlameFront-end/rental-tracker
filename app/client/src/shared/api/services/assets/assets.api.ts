@@ -12,6 +12,7 @@ import { invalidateAssetRelatedQueries } from '@/shared/api/cache-invalidation'
 export interface Asset {
   id: string
   userId: string
+  isArchived: boolean
   name: string
   createdAt: string
   updatedAt: string
@@ -35,6 +36,7 @@ export interface AssetDeleteConflictErrorResponse {
 
 export interface DeleteAssetPayload {
   assetId: string
+  archiveOnly?: boolean
   removeRelatedBookings?: boolean
 }
 
@@ -102,19 +104,20 @@ const updateAsset = async ({
 
 const deleteAsset = async ({
   assetId,
+  archiveOnly = false,
   removeRelatedBookings = false
 }: DeleteAssetPayload) => {
+  const params = {
+    ...(archiveOnly ? { archiveOnly: true } : {}),
+    ...(removeRelatedBookings ? { removeRelatedBookings: true } : {})
+  }
+
   await axiosInstance.delete(`/assets/${assetId}`, {
-    ...(removeRelatedBookings
-      ? {
-          params: {
-            removeRelatedBookings: true
-          }
-        }
-      : {})
+    ...(Object.keys(params).length > 0 ? { params } : {})
   })
 
   return {
+    archivedOnly: archiveOnly,
     removedRelatedBookings: removeRelatedBookings
   }
 }

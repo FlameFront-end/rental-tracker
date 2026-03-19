@@ -75,7 +75,7 @@ export class AssetsController {
     @CurrentUser() user: RequestUser,
     @Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
   ) {
-    return this.assetsService.findOwnedAssetOrFail(user.userId, assetId);
+    return this.assetsService.findOwnedActiveAssetOrFail(user.userId, assetId);
   }
 
   @Patch(':assetId')
@@ -96,10 +96,13 @@ export class AssetsController {
   async remove(
     @CurrentUser() user: RequestUser,
     @Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
+    @Query('archiveOnly', new DefaultValuePipe(false), ParseBoolPipe)
+    archiveOnly: boolean,
     @Query('removeRelatedBookings', new DefaultValuePipe(false), ParseBoolPipe)
     removeRelatedBookings: boolean,
   ) {
     await this.assetsService.remove(user.userId, assetId, {
+      archiveOnly,
       removeRelatedBookings,
     });
   }

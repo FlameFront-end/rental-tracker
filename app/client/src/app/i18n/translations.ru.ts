@@ -242,11 +242,12 @@ export const ruTranslations: TranslationDictionary = {
   'assets.errorDelete': 'Не удалось удалить байк. Попробуйте ещё раз.',
   'assets.toastSaved': 'Байк сохранён.',
   'assets.toastDeleted': 'Байк удалён.',
+  'assets.toastArchived': 'Байк удалён из парка. Аренды сохранены.',
   'assets.toastDeletedWithBookings': 'Байк и связанные аренды удалены.',
   'assets.confirmDeleteTitle': 'Удалить байк?',
   'assets.confirmDeleteDescription': ({ name }) =>
     `Удалить "${name}" из каталога? Это действие нельзя отменить.`,
-  'assets.confirmDeleteWithBookingsTitle': 'Удалить байк вместе с арендами?',
+  'assets.confirmDeleteWithBookingsTitle': 'Байк уже используется',
   'assets.confirmDeleteWithBookingsDescription': ({
     activeOrFuture,
     name,
@@ -255,14 +256,17 @@ export const ruTranslations: TranslationDictionary = {
     const totalBookings = Number(total ?? 0)
     const activeOrFutureBookings = Number(activeOrFuture ?? 0)
 
-    return `"${name}" уже используется в ${pluralizeRu(
+    return `"${name}" связан с ${pluralizeRu(
       totalBookings,
-      'связанной аренде',
-      'связанных арендах',
-      'связанных арендах'
-    )}. Удалить только байк отдельно нельзя, потому что аренды привязаны к нему напрямую.${activeOrFutureBookings > 0 ? ` Сейчас среди них ${pluralizeRu(activeOrFutureBookings, 'активная или будущая аренда', 'активные или будущие аренды', 'активных или будущих аренд')}.` : ''} Если продолжить, будут удалены и байк, и все связанные аренды.`
+      'арендой',
+      'арендами',
+      'арендами'
+    )}.${activeOrFutureBookings > 0 ? ' Есть активные или будущие аренды.' : ''} Что удалить?`
   },
+  'assets.confirmDeleteBikeOnlyAction': 'Удалить байк',
   'assets.confirmDeleteWithBookingsAction': 'Удалить всё',
+  'assets.deleteBikeOnlyUnavailable':
+    'Удалить только байк нельзя, пока к нему привязаны аренды.',
   'assets.emptyTitle': 'Добавьте первый байк',
   'assets.emptyDescription':
     'Сначала добавьте байк. Каждая аренда привязывается к байку из вашего парка.',

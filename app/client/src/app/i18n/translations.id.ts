@@ -236,18 +236,22 @@ export const idTranslations: TranslationDictionary = {
   'assets.errorDelete': 'Gagal menghapus motor. Coba lagi.',
   'assets.toastSaved': 'Motor disimpan.',
   'assets.toastDeleted': 'Motor dihapus.',
+  'assets.toastArchived': 'Motor dihapus dari armada. Sewa tetap disimpan.',
   'assets.toastDeletedWithBookings': 'Motor dan semua sewa terkait dihapus.',
   'assets.confirmDeleteTitle': 'Hapus motor?',
   'assets.confirmDeleteDescription': ({ name }) =>
     `Hapus "${name}" dari katalog? Tindakan ini tidak bisa dibatalkan.`,
-  'assets.confirmDeleteWithBookingsTitle': 'Hapus motor beserta sewa terkait?',
+  'assets.confirmDeleteWithBookingsTitle': 'Motor sudah dipakai',
   'assets.confirmDeleteWithBookingsDescription': ({
     activeOrFuture,
     name,
     total
   }) =>
-    `"${name}" masih dipakai di ${pluralizeId(Number(total ?? 0), 'sewa terkait')}. Motor ini tidak bisa dihapus sendiri karena sewa-sewa tersebut terhubung langsung ke motor.${Number(activeOrFuture ?? 0) > 0 ? ` Masih ada ${pluralizeId(Number(activeOrFuture ?? 0), 'sewa aktif atau yang akan datang')}.` : ''} Jika dilanjutkan, motor dan semua sewa terkait akan dihapus.`,
+    `"${name}" terhubung ke ${pluralizeId(Number(total ?? 0), 'sewa')}.${Number(activeOrFuture ?? 0) > 0 ? ' Masih ada sewa aktif atau yang akan datang.' : ''} Apa yang ingin dihapus?`,
+  'assets.confirmDeleteBikeOnlyAction': 'Hapus motor',
   'assets.confirmDeleteWithBookingsAction': 'Hapus semua',
+  'assets.deleteBikeOnlyUnavailable':
+    'Motor ini tidak bisa dihapus sendiri selama masih terhubung ke sewa.',
   'assets.emptyTitle': 'Tambah motor pertama',
   'assets.emptyDescription':
     'Mulai dengan menambahkan motor. Setiap sewa akan terhubung ke salah satu motor di armada Anda.',

@@ -17,6 +17,7 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AssetEntity } from './entities/asset.entity';
 
 interface RemoveAssetOptions {
+  archiveOnly?: boolean;
   removeRelatedBookings?: boolean;
 }
 
@@ -50,6 +51,7 @@ export class AssetsService {
   async findAll(userId: string, query: ListAssetsQueryDto) {
     const [items, total] = await this.assetsRepository.findAndCount({
       where: {
+        isArchived: false,
         userId,
       },
       order: {
@@ -88,8 +90,20 @@ export class AssetsService {
     return asset;
   }
 
-  async update(userId: string, assetId: string, dto: UpdateAssetDto) {
+  async findOwnedActiveAssetOrFail(userId: string, assetId: string) {
     const asset = await this.findOwnedAssetOrFail(userId, assetId);
+
+    if (asset.isArchived) {
+      throw new ConflictException(
+        'Archived assets cannot be used for new bookings.',
+      );
+    }
+
+    return asset;
+  }
+
+  async update(userId: string, assetId: string, dto: UpdateAssetDto) {
+    const asset = await this.findOwnedActiveAssetOrFail(userId, assetId);
     const nextAsset = this.assetsRepository.merge(asset, dto);
 
     return this.assetsRepository.save(nextAsset);
@@ -103,7 +117,11 @@ export class AssetsService {
     const asset = await this.findOwnedAssetOrFail(userId, assetId);
     const bookingStats = await this.getAssetBookingStats(asset.id);
 
-    if (bookingStats.totalBookings > 0 && !options.removeRelatedBookings) {
+    if (
+      bookingStats.totalBookings > 0 &&
+      !options.archiveOnly &&
+      !options.removeRelatedBookings
+    ) {
       throw this.buildRemoveConflict(bookingStats);
     }
 
@@ -117,6 +135,15 @@ export class AssetsService {
             id: asset.id,
           });
         });
+
+        return;
+      }
+
+      if (bookingStats.totalBookings > 0 && options.archiveOnly) {
+        if (!asset.isArchived) {
+          asset.isArchived = true;
+          await this.assetsRepository.save(asset);
+        }
 
         return;
       }

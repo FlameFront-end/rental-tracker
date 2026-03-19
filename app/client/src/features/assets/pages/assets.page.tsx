@@ -4,6 +4,7 @@ import type { AxiosError } from 'axios'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useConfirm } from '@/app/confirm/use-confirm'
+import { useConfirmChoice } from '@/app/confirm/use-confirm-choice'
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
@@ -48,6 +49,7 @@ const getDeleteAssetConflictDetails = (error: unknown) => {
 const AssetsPage = () => {
   const navigate = useNavigate()
   const confirm = useConfirm()
+  const confirmChoice = useConfirmChoice()
   const { t } = useI18n()
   const { error: hapticError, success } = useTelegramHaptics()
   const toast = useToast()
@@ -225,16 +227,18 @@ const AssetsPage = () => {
       success()
       toast.success(
         t(
-          deleteResult.removedRelatedBookings
-            ? 'assets.toastDeletedWithBookings'
-            : 'assets.toastDeleted'
+          deleteResult.archivedOnly
+            ? 'assets.toastArchived'
+            : deleteResult.removedRelatedBookings
+              ? 'assets.toastDeletedWithBookings'
+              : 'assets.toastDeleted'
         )
       )
     } catch (deleteError) {
       const conflictDetails = getDeleteAssetConflictDetails(deleteError)
 
       if (conflictDetails) {
-        const shouldDeleteWithBookings = await confirm({
+        const deleteAction = await confirmChoice({
           title: t('assets.confirmDeleteWithBookingsTitle'),
           description: t('assets.confirmDeleteWithBookingsDescription', {
             activeOrFuture: conflictDetails.activeOrFutureBookings,
@@ -242,12 +246,40 @@ const AssetsPage = () => {
             total: conflictDetails.totalBookings
           }),
           confirmText: t('assets.confirmDeleteWithBookingsAction'),
-          cancelText: t('common.keep'),
+          secondaryText: t('assets.confirmDeleteBikeOnlyAction'),
+          cancelText: t('common.cancel'),
           tone: 'danger'
         })
 
-        if (!shouldDeleteWithBookings) {
+        if (deleteAction === 'cancel') {
           return
+        }
+
+        if (deleteAction === 'secondary') {
+          try {
+            await deleteAsset.mutateAsync({
+              archiveOnly: true,
+              assetId: asset.id
+            })
+
+            if (selectedAssetId === asset.id) {
+              updateSelectedAsset(null)
+              setIsComposerOpen(false)
+              setFormResetVersion((current) => current + 1)
+            }
+            success()
+            toast.success(t('assets.toastArchived'))
+            return
+          } catch (archiveAssetError) {
+            hapticError()
+            const message = getApiErrorMessage(
+              archiveAssetError,
+              t('assets.errorDelete')
+            )
+            setListError(message)
+            toast.error(message)
+            return
+          }
         }
 
         try {
