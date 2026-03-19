@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useConfirm } from '@/app/confirm/use-confirm'
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
+import { useToast } from '@/app/toast/use-toast'
 import type { Booking } from '@/shared/api/services/bookings'
 import type { DashboardBookingItem } from '@/shared/api/services/dashboard'
 import { useDashboardSummaryQuery } from '@/shared/api/services/dashboard'
@@ -30,6 +31,7 @@ const DashboardPage = () => {
 	const confirm = useConfirm()
 	const { t } = useI18n()
 	const { error: hapticError, success } = useTelegramHaptics()
+	const toast = useToast()
 	const {
 		data: summary,
 		error: summaryError,
@@ -63,14 +65,12 @@ const DashboardPage = () => {
 		try {
 			await deleteBooking.mutateAsync(booking.id)
 			success()
+			toast.success(t('bookings.toastDeleted'))
 		} catch (deleteError) {
 			hapticError()
-			setListError(
-				getApiErrorMessage(
-					deleteError,
-					t('dashboard.errorDelete')
-				)
-			)
+			const message = getApiErrorMessage(deleteError, t('dashboard.errorDelete'))
+			setListError(message)
+			toast.error(message)
 		}
 	}
 
@@ -83,14 +83,18 @@ const DashboardPage = () => {
 				status: booking.status === 'paid' ? 'pending' : 'paid'
 			})
 			success()
-		} catch (statusError) {
-			hapticError()
-			setListError(
-				getApiErrorMessage(
-					statusError,
-					t('dashboard.errorStatus')
+			toast.success(
+				t(
+					booking.status === 'paid'
+						? 'bookings.toastStatusPending'
+						: 'bookings.toastStatusPaid'
 				)
 			)
+		} catch (statusError) {
+			hapticError()
+			const message = getApiErrorMessage(statusError, t('dashboard.errorStatus'))
+			setListError(message)
+			toast.error(message)
 		}
 	}
 

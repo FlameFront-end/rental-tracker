@@ -126,6 +126,7 @@ export const ruTranslations: TranslationDictionary = {
 	'subscription.cta.startTrial': 'Начать пробный период',
 	'subscription.cta.activatingTrial': 'Запускаем пробный период...',
 	'subscription.cta.buy': 'Открыть Telegram для оплаты',
+	'subscription.toastTrialActivated': 'Пробный период активирован.',
 	'subscription.error.activateTrial':
 		'Не удалось активировать пробный период. Попробуйте ещё раз.',
 	'dashboard.title': 'Обзор',
@@ -211,6 +212,8 @@ export const ruTranslations: TranslationDictionary = {
 		'Отправлять напоминание за день до окончания аренды.',
 	'settings.notificationsSaveFailed':
 		'Не удалось сохранить настройки уведомлений. Попробуйте ещё раз.',
+	'settings.toastRemindersEnabled': 'Напоминания в Telegram включены.',
+	'settings.toastNotificationsSaved': 'Настройки напоминаний сохранены.',
 	'assets.title': 'Парк',
 	'assets.subtitle': 'Короткие и понятные названия помогут быстро находить нужный байк.',
 	'assets.totalBikes': 'Всего байков',
@@ -224,6 +227,8 @@ export const ruTranslations: TranslationDictionary = {
 	'assets.errorLoad': 'Не удалось загрузить байки. Обновите страницу.',
 	'assets.errorSave': 'Не удалось сохранить байк. Попробуйте ещё раз.',
 	'assets.errorDelete': 'Не удалось удалить байк. Попробуйте ещё раз.',
+	'assets.toastSaved': 'Байк сохранён.',
+	'assets.toastDeleted': 'Байк удалён.',
 	'assets.confirmDeleteTitle': 'Удалить байк?',
 	'assets.confirmDeleteDescription': ({ name }) =>
 		`Удалить "${name}" из каталога? Это действие нельзя отменить.`,
@@ -265,6 +270,10 @@ export const ruTranslations: TranslationDictionary = {
 	'bookings.errorSave': 'Не удалось сохранить аренду. Попробуйте ещё раз.',
 	'bookings.errorDelete': 'Не удалось удалить аренду. Попробуйте ещё раз.',
 	'bookings.errorStatus': 'Не удалось обновить статус оплаты. Попробуйте ещё раз.',
+	'bookings.toastSaved': 'Аренда сохранена.',
+	'bookings.toastDeleted': 'Аренда удалена.',
+	'bookings.toastStatusPaid': 'Статус оплаты обновлён: оплачено.',
+	'bookings.toastStatusPending': 'Статус оплаты обновлён: ожидает оплаты.',
 	'bookings.confirmDeleteTitle': 'Удалить аренду?',
 	'bookings.confirmDeleteDescription': ({ name }) =>
 		`Удалить аренду для "${name}"? Это действие нельзя отменить.`,

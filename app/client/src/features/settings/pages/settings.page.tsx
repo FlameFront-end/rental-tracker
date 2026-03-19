@@ -15,6 +15,7 @@ import {
 } from '@/app/telegram/app-storage'
 import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
+import { useToast } from '@/app/toast/use-toast'
 import { useTheme, type AppTheme } from '@/app/theme/theme.context'
 import {
 	useNotificationsPreferencesQuery,
@@ -40,6 +41,7 @@ const SettingsPage = () => {
 	const { isTelegramEnvironment } = useAuthSession()
 	const { theme, setTheme } = useTheme()
 	const { error: hapticError, selectionChanged, success } = useTelegramHaptics()
+	const toast = useToast()
 	const { data: notificationsStatus, isLoading: isNotificationsStatusLoading } =
 		useNotificationsStatusQuery()
 	const {
@@ -154,15 +156,21 @@ const SettingsPage = () => {
 
 			if (nextStatus === 'allowed') {
 				success()
+				toast.success(t('settings.toastRemindersEnabled'))
 				return
 			}
 
-			setRemindersError(t('dashboard.remindersAccessDeclined'))
+			const message = t('dashboard.remindersAccessDeclined')
+			setRemindersError(message)
+			toast.info(message)
 		} catch (requestError) {
 			hapticError()
-			setRemindersError(
-				getApiErrorMessage(requestError, t('dashboard.remindersRequestFailed'))
+			const message = getApiErrorMessage(
+				requestError,
+				t('dashboard.remindersRequestFailed')
 			)
+			setRemindersError(message)
+			toast.error(message)
 		} finally {
 			setIsRequestingWriteAccess(false)
 		}
@@ -171,7 +179,8 @@ const SettingsPage = () => {
 		hapticError,
 		isRemindersInfrastructureReady,
 		success,
-		t
+		t,
+		toast
 	])
 
 	const handleTogglePreference = useCallback(
@@ -183,14 +192,18 @@ const SettingsPage = () => {
 					[field]: value
 				})
 				success()
+				toast.success(t('settings.toastNotificationsSaved'))
 			} catch (updateError) {
 				hapticError()
-				setRemindersError(
-					getApiErrorMessage(updateError, t('settings.notificationsSaveFailed'))
+				const message = getApiErrorMessage(
+					updateError,
+					t('settings.notificationsSaveFailed')
 				)
+				setRemindersError(message)
+				toast.error(message)
 			}
 		},
-		[hapticError, success, t, updateNotificationsPreferences]
+		[hapticError, success, t, toast, updateNotificationsPreferences]
 	)
 
 	return (

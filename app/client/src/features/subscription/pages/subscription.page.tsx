@@ -6,6 +6,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useAuthSession } from '@/app/session/use-auth-session'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
+import { useToast } from '@/app/toast/use-toast'
 import { activateTrialSubscription } from '@/shared/api/services/auth'
 import { Button } from '@/shared/kit'
 import { getApiErrorMessage, getIntlLocale } from '@/shared/lib'
@@ -44,6 +45,7 @@ const SubscriptionPage = () => {
 	const navigate = useNavigate()
 	const { locale, t } = useI18n()
 	const { error: triggerError, success } = useTelegramHaptics()
+	const toast = useToast()
 	const {
 		hasSubscriptionAccess,
 		isTelegramEnvironment,
@@ -93,12 +95,13 @@ const SubscriptionPage = () => {
 
 			updateCurrentUser(nextUser)
 			success()
+			toast.success(t('subscription.toastTrialActivated'))
 			navigate(ROUTES.DASHBOARD, { replace: true })
 		} catch (error) {
-			setActivationError(
-				getApiErrorMessage(error, t('subscription.error.activateTrial'))
-			)
+			const message = getApiErrorMessage(error, t('subscription.error.activateTrial'))
+			setActivationError(message)
 			triggerError()
+			toast.error(message)
 		} finally {
 			setIsActivatingTrial(false)
 		}

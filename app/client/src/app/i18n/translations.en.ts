@@ -114,6 +114,7 @@ export const enTranslations: TranslationDictionary = {
 	'subscription.cta.startTrial': 'Start free trial',
 	'subscription.cta.activatingTrial': 'Starting trial...',
 	'subscription.cta.buy': 'Open Telegram to pay',
+	'subscription.toastTrialActivated': 'Free trial activated.',
 	'subscription.error.activateTrial':
 		'Failed to activate the free trial. Please try again.',
 	'dashboard.title': 'Overview',
@@ -198,6 +199,8 @@ export const enTranslations: TranslationDictionary = {
 		'Send a reminder one day before a rental ends.',
 	'settings.notificationsSaveFailed':
 		'Failed to save notification settings. Please try again.',
+	'settings.toastRemindersEnabled': 'Telegram reminders are enabled.',
+	'settings.toastNotificationsSaved': 'Reminder settings saved.',
 	'assets.title': 'Fleet',
 	'assets.subtitle': 'Use short, clear bike names so the right one is easy to find.',
 	'assets.totalBikes': 'Total bikes',
@@ -211,6 +214,8 @@ export const enTranslations: TranslationDictionary = {
 	'assets.errorLoad': 'Failed to load bikes. Please refresh the page.',
 	'assets.errorSave': 'Failed to save the bike. Please try again.',
 	'assets.errorDelete': 'Failed to delete the bike. Please try again.',
+	'assets.toastSaved': 'Bike saved.',
+	'assets.toastDeleted': 'Bike deleted.',
 	'assets.confirmDeleteTitle': 'Delete bike?',
 	'assets.confirmDeleteDescription': ({ name }) =>
 		`Delete "${name}" from the catalog? This cannot be undone.`,
@@ -252,6 +257,10 @@ export const enTranslations: TranslationDictionary = {
 	'bookings.errorSave': 'Failed to save the rental. Please try again.',
 	'bookings.errorDelete': 'Failed to delete the rental. Please try again.',
 	'bookings.errorStatus': 'Failed to update the payment status. Please try again.',
+	'bookings.toastSaved': 'Rental saved.',
+	'bookings.toastDeleted': 'Rental deleted.',
+	'bookings.toastStatusPaid': 'Payment status updated: paid.',
+	'bookings.toastStatusPending': 'Payment status updated: pending.',
 	'bookings.confirmDeleteTitle': 'Delete rental?',
 	'bookings.confirmDeleteDescription': ({ name }) =>
 		`Delete the rental for "${name}"? This cannot be undone.`,

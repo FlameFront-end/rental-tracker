@@ -7,6 +7,7 @@ import { I18nProvider } from '@/app/i18n/i18n.provider'
 import { AuthSessionProvider } from '@/app/session/auth-session.provider'
 import { TelegramProvider } from '@/app/telegram/telegram.provider'
 import { ThemeProvider } from '@/app/theme/theme.provider'
+import { ToastProvider } from '@/app/toast/toast.provider'
 import { queryClient } from '@/shared/api/queryClient'
 
 export const Providers = ({ children }: PropsWithChildren) => {
@@ -16,7 +17,9 @@ export const Providers = ({ children }: PropsWithChildren) => {
 				<QueryClientProvider client={queryClient}>
 					<AuthSessionProvider>
 						<TelegramProvider>
-							<ConfirmProvider>{children}</ConfirmProvider>
+							<ToastProvider>
+								<ConfirmProvider>{children}</ConfirmProvider>
+							</ToastProvider>
 						</TelegramProvider>
 					</AuthSessionProvider>
 				</QueryClientProvider>

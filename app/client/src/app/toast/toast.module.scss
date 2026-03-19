@@ -1,0 +1,139 @@
+.viewport {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 90;
+	padding:
+		calc(0.55rem + var(--app-safe-top) + var(--app-telegram-top-chrome, 0px))
+		0.7rem
+		0;
+	pointer-events: none;
+}
+
+.stack {
+	display: grid;
+	gap: 0.5rem;
+	justify-items: center;
+	width: min(100%, 30rem);
+	margin: 0 auto;
+}
+
+.toast {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 0.7rem;
+	width: 100%;
+	padding: 0.8rem 0.85rem;
+	border: 1px solid var(--color-border);
+	border-radius: 1rem;
+	background:
+		linear-gradient(160deg, var(--color-surface-strong), var(--color-surface)),
+		var(--color-surface);
+	box-shadow: var(--shadow-card);
+	backdrop-filter: blur(16px);
+	pointer-events: auto;
+	transform-origin: top center;
+	will-change: opacity, transform;
+	animation: toast-enter 0.22s ease both;
+}
+
+.leaving {
+	pointer-events: none;
+	animation: toast-exit 0.22s ease forwards;
+}
+
+.iconWrap {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 999px;
+	flex-shrink: 0;
+}
+
+.message {
+	margin: 0;
+	font-size: 0.92rem;
+	font-weight: 700;
+	line-height: 1.35;
+}
+
+.closeButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.9rem;
+	height: 1.9rem;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--color-text-muted);
+	cursor: pointer;
+}
+
+.success {
+	.iconWrap {
+		background: var(--color-success-soft);
+		color: var(--color-success-text);
+	}
+}
+
+.error {
+	.iconWrap {
+		background: var(--color-danger-soft);
+		color: var(--color-danger-text);
+	}
+}
+
+.info {
+	.iconWrap {
+		background: var(--color-accent-soft);
+		color: var(--color-accent);
+	}
+}
+
+@keyframes toast-enter {
+	from {
+		opacity: 0;
+		transform: translateY(-8px) scale(0.98);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes toast-exit {
+	from {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(-10px) scale(0.98);
+	}
+}
+
+@media (max-width: 640px) {
+	.viewport {
+		padding:
+			calc(0.45rem + var(--app-safe-top) + var(--app-telegram-top-chrome, 0px))
+			0.55rem
+			0;
+	}
+
+	.toast {
+		gap: 0.62rem;
+		padding: 0.72rem 0.76rem;
+	}
+
+	.message {
+		font-size: 0.88rem;
+	}
+}

@@ -6,6 +6,7 @@ import { useConfirm } from '@/app/confirm/use-confirm'
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
+import { useToast } from '@/app/toast/use-toast'
 import type { Asset, AssetFormValues } from '@/shared/api/services/assets'
 import {
 	useAssetQuery,
@@ -33,6 +34,7 @@ const AssetsPage = () => {
 	const confirm = useConfirm()
 	const { t } = useI18n()
 	const { error: hapticError, success } = useTelegramHaptics()
+	const toast = useToast()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const [isComposerOpen, setIsComposerOpen] = useState(false)
 	const [formResetVersion, setFormResetVersion] = useState(0)
@@ -156,11 +158,12 @@ const AssetsPage = () => {
 			setIsComposerOpen(false)
 			setFormResetVersion((current) => current + 1)
 			success()
+			toast.success(t('assets.toastSaved'))
 		} catch (submitError) {
 			hapticError()
-			setFormError(
-				getApiErrorMessage(submitError, t('assets.errorSave'))
-			)
+			const message = getApiErrorMessage(submitError, t('assets.errorSave'))
+			setFormError(message)
+			toast.error(message)
 		}
 	}
 
@@ -190,14 +193,12 @@ const AssetsPage = () => {
 				setFormResetVersion((current) => current + 1)
 			}
 			success()
+			toast.success(t('assets.toastDeleted'))
 		} catch (deleteError) {
 			hapticError()
-			setListError(
-				getApiErrorMessage(
-					deleteError,
-					t('assets.errorDelete')
-				)
-			)
+			const message = getApiErrorMessage(deleteError, t('assets.errorDelete'))
+			setListError(message)
+			toast.error(message)
 		}
 	}
 

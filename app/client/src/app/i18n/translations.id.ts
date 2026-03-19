@@ -115,6 +115,7 @@ export const idTranslations: TranslationDictionary = {
 	'subscription.cta.startTrial': 'Mulai trial gratis',
 	'subscription.cta.activatingTrial': 'Memulai trial...',
 	'subscription.cta.buy': 'Buka Telegram untuk bayar',
+	'subscription.toastTrialActivated': 'Trial gratis sudah aktif.',
 	'subscription.error.activateTrial': 'Gagal mengaktifkan trial gratis. Coba lagi.',
 	'dashboard.title': 'Ringkasan',
 	'dashboard.subtitle': 'Pengembalian, pembayaran, dan pengingat untuk beberapa hari ke depan.',
@@ -199,6 +200,8 @@ export const idTranslations: TranslationDictionary = {
 		'Kirim pengingat satu hari sebelum rental berakhir.',
 	'settings.notificationsSaveFailed':
 		'Gagal menyimpan pengaturan notifikasi. Coba lagi.',
+	'settings.toastRemindersEnabled': 'Pengingat Telegram sudah aktif.',
+	'settings.toastNotificationsSaved': 'Pengaturan pengingat disimpan.',
 	'assets.title': 'Armada',
 	'assets.subtitle': 'Gunakan nama motor yang singkat dan jelas agar motor yang dicari mudah ditemukan.',
 	'assets.totalBikes': 'Total motor',
@@ -212,6 +215,8 @@ export const idTranslations: TranslationDictionary = {
 	'assets.errorLoad': 'Gagal memuat motor. Segarkan halaman.',
 	'assets.errorSave': 'Gagal menyimpan motor. Coba lagi.',
 	'assets.errorDelete': 'Gagal menghapus motor. Coba lagi.',
+	'assets.toastSaved': 'Motor disimpan.',
+	'assets.toastDeleted': 'Motor dihapus.',
 	'assets.confirmDeleteTitle': 'Hapus motor?',
 	'assets.confirmDeleteDescription': ({ name }) =>
 		`Hapus "${name}" dari katalog? Tindakan ini tidak bisa dibatalkan.`,
@@ -253,6 +258,10 @@ export const idTranslations: TranslationDictionary = {
 	'bookings.errorSave': 'Gagal menyimpan sewa. Coba lagi.',
 	'bookings.errorDelete': 'Gagal menghapus sewa. Coba lagi.',
 	'bookings.errorStatus': 'Gagal memperbarui status pembayaran. Coba lagi.',
+	'bookings.toastSaved': 'Sewa disimpan.',
+	'bookings.toastDeleted': 'Sewa dihapus.',
+	'bookings.toastStatusPaid': 'Status pembayaran diperbarui: lunas.',
+	'bookings.toastStatusPending': 'Status pembayaran diperbarui: menunggu bayar.',
 	'bookings.confirmDeleteTitle': 'Hapus sewa?',
 	'bookings.confirmDeleteDescription': ({ name }) =>
 		`Hapus booking untuk "${name}"? Tindakan ini tidak bisa dibatalkan.`,

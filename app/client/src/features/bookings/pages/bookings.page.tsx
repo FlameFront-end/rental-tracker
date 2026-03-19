@@ -12,6 +12,7 @@ import {
 } from '@/app/telegram/app-storage'
 import { useTelegramBackButton } from '@/app/telegram/telegram-back-button'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
+import { useToast } from '@/app/toast/use-toast'
 import type {
 	Booking,
 	BookingFilters,
@@ -59,6 +60,7 @@ const BookingsPage = () => {
 		selectionChanged,
 		success
 	} = useTelegramHaptics()
+	const toast = useToast()
 	const [searchParams, setSearchParams] = useSearchParams()
 	const assetFilterParam = searchParams.get(ROUTE_QUERY_KEYS.FILTER_ASSET_ID)
 	const statusFilterParam = searchParams.get(ROUTE_QUERY_KEYS.BOOKING_STATUS)
@@ -461,9 +463,12 @@ const BookingsPage = () => {
 			setIsComposerOpen(false)
 			clearBookingSearchParams()
 			success()
+			toast.success(t('bookings.toastSaved'))
 		} catch (submitError) {
 			hapticError()
-			setFormError(getApiErrorMessage(submitError, t('bookings.errorSave')))
+			const message = getApiErrorMessage(submitError, t('bookings.errorSave'))
+			setFormError(message)
+			toast.error(message)
 		}
 	}
 
@@ -493,9 +498,12 @@ const BookingsPage = () => {
 				clearBookingSearchParams()
 			}
 			success()
+			toast.success(t('bookings.toastDeleted'))
 		} catch (deleteError) {
 			hapticError()
-			setListError(getApiErrorMessage(deleteError, t('bookings.errorDelete')))
+			const message = getApiErrorMessage(deleteError, t('bookings.errorDelete'))
+			setListError(message)
+			toast.error(message)
 		}
 	}
 
@@ -508,9 +516,18 @@ const BookingsPage = () => {
 				status: booking.status === 'paid' ? 'pending' : 'paid'
 			})
 			success()
+			toast.success(
+				t(
+					booking.status === 'paid'
+						? 'bookings.toastStatusPending'
+						: 'bookings.toastStatusPaid'
+				)
+			)
 		} catch (statusError) {
 			hapticError()
-			setListError(getApiErrorMessage(statusError, t('bookings.errorStatus')))
+			const message = getApiErrorMessage(statusError, t('bookings.errorStatus'))
+			setListError(message)
+			toast.error(message)
 		}
 	}
 
