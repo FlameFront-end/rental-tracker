@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import { MoreVertical } from 'lucide-react'
+
+import { useDeferredValue, useMemo, useState } from 'react'
 
 import { Navigate, useNavigate } from 'react-router-dom'
 
@@ -18,7 +20,7 @@ import {
 import { Button, SelectField, Skeleton, TextField } from '@/shared/kit'
 import { getApiErrorMessage, getIntlLocale } from '@/shared/lib'
 import { ROUTES, type AppLocale } from '@/shared/model'
-import { Layout } from '@/shared/widgets'
+import { Layout, ScreenSheet } from '@/shared/widgets'
 
 import styles from './admin.module.scss'
 
@@ -78,9 +80,17 @@ const resolveUserAccessState = ({
 const isRootAdminUser = (targetUser: Pick<AdminUser, 'telegramUsername'>) =>
   targetUser.telegramUsername?.toLowerCase() === BOOTSTRAP_ADMIN_USERNAME
 
+const formatAdminUserName = (
+  targetUser: Pick<AdminUser, 'telegramUsername'>,
+  fallbackLabel: string
+) =>
+  targetUser.telegramUsername
+    ? `@${targetUser.telegramUsername}`
+    : fallbackLabel
+
 const AdminPage = () => {
   const navigate = useNavigate()
-  const { locale } = useI18n()
+  const { locale, t } = useI18n()
   const copy = useMemo(() => getAdminCopy(locale), [locale])
   const toast = useToast()
   const {
@@ -91,7 +101,33 @@ const AdminPage = () => {
   const { isAdmin, updateCurrentUser, user } = useAuthSession()
   const [searchValue, setSearchValue] = useState('')
   const [statusFilter, setStatusFilter] = useState<UserAccessFilter>('all')
-  const { data: users = [], error, isLoading } = useAdminUsersQuery()
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
+  const deferredSearchValue = useDeferredValue(searchValue)
+  const adminUsersFilters = useMemo(
+    () => ({
+      ...(statusFilter !== 'all'
+        ? {
+            access: statusFilter
+          }
+        : {}),
+      ...(deferredSearchValue.trim()
+        ? {
+            search: deferredSearchValue.trim()
+          }
+        : {})
+    }),
+    [deferredSearchValue, statusFilter]
+  )
+  const {
+    data: users = [],
+    error,
+    fetchNextPage,
+    hasMore = false,
+    isFetchingMore,
+    isLoading,
+    summary,
+    total
+  } = useAdminUsersQuery(adminUsersFilters)
   const updateAdminUser = useUpdateAdminUserMutation()
   const updateSubscription = useUpdateAdminUserSubscriptionMutation()
 
@@ -99,92 +135,69 @@ const AdminPage = () => {
     navigate(ROUTES.SETTINGS)
   })
 
-  const metrics = useMemo(() => {
-    const active = users.filter(
-      (entry) => resolveUserAccessState(entry) === 'active'
-    ).length
-    const trial = users.filter(
-      (entry) => resolveUserAccessState(entry) === 'trial'
-    ).length
-    const expired = users.filter(
-      (entry) => resolveUserAccessState(entry) === 'expired'
-    ).length
-    const none = users.filter(
-      (entry) => resolveUserAccessState(entry) === 'none'
-    ).length
-
-    return {
-      active,
-      admins: users.filter((entry) => entry.isAdmin).length,
-      expired,
-      none,
-      totalUsers: users.length,
-      trial
-    }
-  }, [users])
+  const isListLoading = isLoading && users.length === 0
 
   const chartItems = useMemo(() => {
-    const total = Math.max(users.length, 1)
+    const totalUsers = Math.max(summary.totalUsers, 1)
 
     return [
       {
-        count: metrics.active,
+        count: summary.active,
         key: 'active',
         label: copy.statuses.active
       },
       {
-        count: metrics.trial,
+        count: summary.trial,
         key: 'trial',
         label: copy.statuses.trial
       },
       {
-        count: metrics.expired,
+        count: summary.expired,
         key: 'expired',
         label: copy.statuses.expired
       },
       {
-        count: metrics.none,
+        count: summary.none,
         key: 'none',
         label: copy.statuses.none
       }
     ].map((item) => ({
       ...item,
-      width: `${Math.max((item.count / total) * 100, item.count > 0 ? 8 : 0)}%`
+      width: `${Math.max((item.count / totalUsers) * 100, item.count > 0 ? 8 : 0)}%`
     }))
   }, [
     copy.statuses.active,
     copy.statuses.expired,
     copy.statuses.none,
     copy.statuses.trial,
-    metrics.active,
-    metrics.expired,
-    metrics.none,
-    metrics.trial,
-    users.length
+    summary.active,
+    summary.expired,
+    summary.none,
+    summary.totalUsers,
+    summary.trial
   ])
-
-  const filteredUsers = useMemo(() => {
-    const normalizedSearch = searchValue.trim().toLowerCase()
-
-    return users.filter((entry) => {
-      const accessState = resolveUserAccessState(entry)
-      const matchesStatus =
-        statusFilter === 'all' || accessState === statusFilter
-      const matchesSearch =
-        normalizedSearch.length === 0 ||
-        entry.telegramId.toLowerCase().includes(normalizedSearch) ||
-        entry.id.toLowerCase().includes(normalizedSearch) ||
-        (entry.telegramUsername?.toLowerCase().includes(normalizedSearch) ??
-          false)
-
-      return matchesStatus && matchesSearch
-    })
-  }, [searchValue, statusFilter, users])
 
   const syncCurrentUser = (nextUser: AdminUser) => {
     if (user?.id === nextUser.id) {
       updateCurrentUser(nextUser)
     }
+  }
+
+  const closeActionSheet = () => {
+    setSelectedUser(null)
+  }
+
+  const openActionSheet = (targetUser: AdminUser) => {
+    selectionChanged()
+    setSelectedUser(targetUser)
+  }
+
+  const handleLoadMore = () => {
+    if (!hasMore || isFetchingMore) {
+      return
+    }
+
+    void fetchNextPage()
   }
 
   const handleSubscriptionAction = async (
@@ -200,6 +213,7 @@ const AdminPage = () => {
       })
 
       syncCurrentUser(nextUser)
+      closeActionSheet()
       success()
 
       if (action === 'grant_month') {
@@ -232,6 +246,7 @@ const AdminPage = () => {
       })
 
       syncCurrentUser(nextUser)
+      closeActionSheet()
       success()
       toast.success(
         nextIsAdmin ? copy.toasts.adminGranted : copy.toasts.adminRemoved
@@ -250,6 +265,24 @@ const AdminPage = () => {
     return <Navigate to={ROUTES.DASHBOARD} replace />
   }
 
+  const selectedUserAccessState = selectedUser
+    ? resolveUserAccessState(selectedUser)
+    : null
+  const selectedUserHasSubscriptionAccess =
+    selectedUserAccessState === 'active' || selectedUserAccessState === 'trial'
+  const isSelectedUserRootAdmin = selectedUser
+    ? isRootAdminUser(selectedUser)
+    : false
+  const isSelectedUserSubscriptionLoading =
+    updateSubscription.isPending &&
+    updateSubscription.variables?.userId === selectedUser?.id
+  const isSelectedUserAdminLoading =
+    updateAdminUser.isPending &&
+    updateAdminUser.variables?.userId === selectedUser?.id
+  const selectedUserDisplayName = selectedUser
+    ? formatAdminUserName(selectedUser, copy.meta.noUsername)
+    : ''
+
   return (
     <Layout title={copy.title} subtitle={copy.subtitle}>
       <div className={styles.page}>
@@ -259,26 +292,26 @@ const AdminPage = () => {
               <span className={styles.eyebrow}>{copy.chartTitle}</span>
               <h2 className={styles.heroTitle}>{copy.usersTitle}</h2>
               <p className={styles.heroDescription}>
-                {copy.usersDescription(filteredUsers.length)}
+                {copy.usersDescription(total)}
               </p>
             </div>
 
             <div className={styles.metricsGrid}>
               <div className={styles.metricCard}>
                 <span>{copy.metrics.totalUsers}</span>
-                <strong>{metrics.totalUsers}</strong>
+                <strong>{summary.totalUsers}</strong>
               </div>
               <div className={styles.metricCard}>
                 <span>{copy.metrics.admins}</span>
-                <strong>{metrics.admins}</strong>
+                <strong>{summary.admins}</strong>
               </div>
               <div className={styles.metricCard}>
                 <span>{copy.metrics.active}</span>
-                <strong>{metrics.active}</strong>
+                <strong>{summary.active}</strong>
               </div>
               <div className={styles.metricCard}>
                 <span>{copy.metrics.trial}</span>
-                <strong>{metrics.trial}</strong>
+                <strong>{summary.trial}</strong>
               </div>
             </div>
           </div>
@@ -342,7 +375,7 @@ const AdminPage = () => {
             </div>
           ) : null}
 
-          {error ? null : isLoading ? (
+          {!error && isListLoading ? (
             <div className={styles.userList}>
               {Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className={styles.userSkeleton}>
@@ -356,58 +389,70 @@ const AdminPage = () => {
                 </div>
               ))}
             </div>
-          ) : filteredUsers.length === 0 ? (
+          ) : null}
+
+          {!error && !isListLoading && total === 0 ? (
             <div className={styles.emptyState}>
               <strong>{copy.emptyTitle}</strong>
               <span>{copy.emptyDescription}</span>
             </div>
-          ) : (
+          ) : null}
+
+          {!error && !isListLoading && total > 0 ? (
             <div className={styles.userList}>
-              {filteredUsers.map((entry) => {
+              {users.map((entry) => {
                 const accessState = resolveUserAccessState(entry)
                 const isRootAdmin = isRootAdminUser(entry)
-                const hasSubscriptionAccess =
-                  accessState === 'active' || accessState === 'trial'
-                const isSubscriptionLoading =
-                  updateSubscription.isPending &&
-                  updateSubscription.variables?.userId === entry.id
-                const isAdminLoading =
-                  updateAdminUser.isPending &&
-                  updateAdminUser.variables?.userId === entry.id
 
                 return (
                   <article key={entry.id} className={styles.userItem}>
                     <div className={styles.userHeader}>
-                      <div className={styles.userIdentity}>
-                        <strong>
-                          {entry.telegramUsername
-                            ? `@${entry.telegramUsername}`
-                            : copy.meta.noUsername}
-                        </strong>
+                      <div className={styles.userHeaderMeta}>
+                        <div className={styles.userIdentity}>
+                          <strong>
+                            {formatAdminUserName(entry, copy.meta.noUsername)}
+                          </strong>
+                        </div>
+
+                        <div className={styles.userBadges}>
+                          <span
+                            className={`${styles.badge} ${styles[`badge${accessState}`]}`}
+                          >
+                            {copy.statuses[accessState]}
+                          </span>
+                          <span
+                            className={`${styles.badge} ${
+                              isRootAdmin
+                                ? styles.badgeOwner
+                                : entry.isAdmin
+                                  ? styles.badgeAdmin
+                                  : styles.badgeUser
+                            }`}
+                          >
+                            {isRootAdmin
+                              ? copy.roles.owner
+                              : entry.isAdmin
+                                ? copy.roles.admin
+                                : copy.roles.user}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className={styles.userBadges}>
-                        <span
-                          className={`${styles.badge} ${styles[`badge${accessState}`]}`}
-                        >
-                          {copy.statuses[accessState]}
-                        </span>
-                        <span
-                          className={`${styles.badge} ${
-                            isRootAdmin
-                              ? styles.badgeOwner
-                              : entry.isAdmin
-                                ? styles.badgeAdmin
-                                : styles.badgeUser
-                          }`}
-                        >
-                          {isRootAdmin
-                            ? copy.roles.owner
-                            : entry.isAdmin
-                              ? copy.roles.admin
-                              : copy.roles.user}
-                        </span>
-                      </div>
+                      <button
+                        type="button"
+                        className={styles.menuButton}
+                        onClick={() => openActionSheet(entry)}
+                        aria-label={`${copy.menuLabel}: ${formatAdminUserName(
+                          entry,
+                          copy.meta.noUsername
+                        )}`}
+                      >
+                        <MoreVertical
+                          size={18}
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                      </button>
                     </div>
 
                     <div className={styles.metaGrid}>
@@ -429,82 +474,140 @@ const AdminPage = () => {
                         </strong>
                       </div>
                     </div>
-
-                    <div className={styles.actionsGrid}>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          void handleSubscriptionAction(entry, 'grant_month')
-                        }}
-                        disabled={isSubscriptionLoading}
-                      >
-                        {isSubscriptionLoading &&
-                        updateSubscription.variables?.action === 'grant_month'
-                          ? copy.pending.grantMonth
-                          : copy.actions.grantMonth}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          void handleSubscriptionAction(entry, 'grant_trial')
-                        }}
-                        disabled={isSubscriptionLoading}
-                      >
-                        {isSubscriptionLoading &&
-                        updateSubscription.variables?.action === 'grant_trial'
-                          ? copy.pending.grantTrial
-                          : copy.actions.grantTrial}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          void handleSubscriptionAction(entry, 'clear')
-                        }}
-                        disabled={
-                          isSubscriptionLoading || !hasSubscriptionAccess
-                        }
-                      >
-                        {isSubscriptionLoading &&
-                        updateSubscription.variables?.action === 'clear'
-                          ? copy.pending.clearSubscription
-                          : copy.actions.clearSubscription}
-                      </Button>
-                      {isRootAdmin ? (
-                        <div className={styles.staticAction}>
-                          <strong>{copy.actions.ownerLocked}</strong>
-                          <span>@{entry.telegramUsername}</span>
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={entry.isAdmin ? 'danger' : 'secondary'}
-                          onClick={() => {
-                            void handleAdminAction(entry, !entry.isAdmin)
-                          }}
-                          disabled={isAdminLoading}
-                        >
-                          {isAdminLoading
-                            ? entry.isAdmin
-                              ? copy.pending.removeAdmin
-                              : copy.pending.makeAdmin
-                            : entry.isAdmin
-                              ? copy.actions.removeAdmin
-                              : copy.actions.makeAdmin}
-                        </Button>
-                      )}
-                    </div>
                   </article>
                 )
               })}
             </div>
-          )}
+          ) : null}
+
+          {!error && !isListLoading && hasMore ? (
+            <div className={styles.paginationActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                className={styles.loadMoreButton}
+                disabled={isFetchingMore}
+                onClick={handleLoadMore}
+              >
+                {isFetchingMore ? t('common.loadingMore') : copy.loadMore}
+              </Button>
+            </div>
+          ) : null}
         </section>
+
+        <ScreenSheet open={Boolean(selectedUser)} onClose={closeActionSheet}>
+          {selectedUser ? (
+            <div className={styles.actionSheet}>
+              <div className={styles.actionSheetHeader}>
+                <span className={styles.eyebrow}>{copy.sheetEyebrow}</span>
+                <h2 className={styles.actionSheetTitle}>
+                  {selectedUserDisplayName}
+                </h2>
+                <div className={styles.actionSheetBadges}>
+                  <span
+                    className={`${styles.badge} ${styles[`badge${selectedUserAccessState!}`]}`}
+                  >
+                    {copy.statuses[selectedUserAccessState!]}
+                  </span>
+                  <span
+                    className={`${styles.badge} ${
+                      isSelectedUserRootAdmin
+                        ? styles.badgeOwner
+                        : selectedUser.isAdmin
+                          ? styles.badgeAdmin
+                          : styles.badgeUser
+                    }`}
+                  >
+                    {isSelectedUserRootAdmin
+                      ? copy.roles.owner
+                      : selectedUser.isAdmin
+                        ? copy.roles.admin
+                        : copy.roles.user}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.actionSheetMeta}>
+                <div className={styles.metaItem}>
+                  <span>{copy.meta.telegramId}</span>
+                  <strong>{selectedUser.telegramId}</strong>
+                </div>
+                <div className={styles.metaItem}>
+                  <span>{copy.meta.accessUntil}</span>
+                  <strong>
+                    {formatDateLabel(selectedUser.subscriptionEndsAt, locale) ??
+                      copy.meta.noSubscription}
+                  </strong>
+                </div>
+              </div>
+
+              <div className={styles.actionSheetActions}>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    void handleSubscriptionAction(selectedUser, 'grant_month')
+                  }}
+                  disabled={isSelectedUserSubscriptionLoading}
+                >
+                  {isSelectedUserSubscriptionLoading &&
+                  updateSubscription.variables?.action === 'grant_month'
+                    ? copy.pending.grantMonth
+                    : copy.actions.grantMonth}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    void handleSubscriptionAction(selectedUser, 'grant_trial')
+                  }}
+                  disabled={isSelectedUserSubscriptionLoading}
+                >
+                  {isSelectedUserSubscriptionLoading &&
+                  updateSubscription.variables?.action === 'grant_trial'
+                    ? copy.pending.grantTrial
+                    : copy.actions.grantTrial}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    void handleSubscriptionAction(selectedUser, 'clear')
+                  }}
+                  disabled={
+                    isSelectedUserSubscriptionLoading ||
+                    !selectedUserHasSubscriptionAccess
+                  }
+                >
+                  {isSelectedUserSubscriptionLoading &&
+                  updateSubscription.variables?.action === 'clear'
+                    ? copy.pending.clearSubscription
+                    : copy.actions.clearSubscription}
+                </Button>
+                {!isSelectedUserRootAdmin ? (
+                  <Button
+                    type="button"
+                    variant={selectedUser.isAdmin ? 'danger' : 'secondary'}
+                    onClick={() => {
+                      void handleAdminAction(
+                        selectedUser,
+                        !selectedUser.isAdmin
+                      )
+                    }}
+                    disabled={isSelectedUserAdminLoading}
+                  >
+                    {isSelectedUserAdminLoading
+                      ? selectedUser.isAdmin
+                        ? copy.pending.removeAdmin
+                        : copy.pending.makeAdmin
+                      : selectedUser.isAdmin
+                        ? copy.actions.removeAdmin
+                        : copy.actions.makeAdmin}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </ScreenSheet>
       </div>
     </Layout>
   )

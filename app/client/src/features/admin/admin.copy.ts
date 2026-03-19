@@ -23,12 +23,14 @@ interface AdminCopy {
   filterExpired: string
   filterNone: string
   filterTrial: string
+  loadMore: string
   metrics: {
     active: string
     admins: string
     totalUsers: string
     trial: string
   }
+  menuLabel: string
   meta: {
     accessUntil: string
     created: string
@@ -54,6 +56,7 @@ interface AdminCopy {
   settingsDescription: string
   settingsEyebrow: string
   settingsTitle: string
+  sheetEyebrow: string
   statuses: {
     active: string
     expired: string
@@ -97,12 +100,14 @@ const copy: Record<AppLocale, AdminCopy> = {
     filterExpired: 'Expired',
     filterNone: 'No access',
     filterTrial: 'Trial',
+    loadMore: 'Load more users',
     metrics: {
       active: 'Active',
       admins: 'Admins',
       totalUsers: 'Users',
       trial: 'Trial'
     },
+    menuLabel: 'User actions',
     meta: {
       accessUntil: 'Access until',
       created: 'Created',
@@ -129,6 +134,7 @@ const copy: Record<AppLocale, AdminCopy> = {
       'Review users, manage subscription access, and grant admin rights.',
     settingsEyebrow: 'Admin',
     settingsTitle: 'Access control',
+    sheetEyebrow: 'Actions',
     statuses: {
       active: 'Active',
       expired: 'Expired',
@@ -170,12 +176,14 @@ const copy: Record<AppLocale, AdminCopy> = {
     filterExpired: 'Kedaluwarsa',
     filterNone: 'Tanpa akses',
     filterTrial: 'Trial',
+    loadMore: 'Muat lebih banyak user',
     metrics: {
       active: 'Aktif',
       admins: 'Admin',
       totalUsers: 'User',
       trial: 'Trial'
     },
+    menuLabel: 'Aksi pengguna',
     meta: {
       accessUntil: 'Akses sampai',
       created: 'Dibuat',
@@ -202,6 +210,7 @@ const copy: Record<AppLocale, AdminCopy> = {
       'Lihat user, atur akses langganan, dan tambahkan admin.',
     settingsEyebrow: 'Admin',
     settingsTitle: 'Kontrol akses',
+    sheetEyebrow: 'Aksi',
     statuses: {
       active: 'Aktif',
       expired: 'Kedaluwarsa',
@@ -243,12 +252,14 @@ const copy: Record<AppLocale, AdminCopy> = {
     filterExpired: 'Просроченные',
     filterNone: 'Без доступа',
     filterTrial: 'Триал',
+    loadMore: 'Показать ещё пользователей',
     metrics: {
       active: 'Активные',
       admins: 'Админы',
       totalUsers: 'Пользователи',
       trial: 'Триал'
     },
+    menuLabel: 'Действия пользователя',
     meta: {
       accessUntil: 'Доступ до',
       created: 'Создан',
@@ -265,7 +276,7 @@ const copy: Record<AppLocale, AdminCopy> = {
     },
     roles: {
       admin: 'Админ',
-      owner: 'Owner',
+      owner: 'Владелец',
       user: 'Пользователь'
     },
     searchLabel: 'Поиск',
@@ -275,6 +286,7 @@ const copy: Record<AppLocale, AdminCopy> = {
       'Смотри список пользователей, выдавай подписку и назначай админов.',
     settingsEyebrow: 'Админка',
     settingsTitle: 'Управление доступом',
+    sheetEyebrow: 'Действия',
     statuses: {
       active: 'Активна',
       expired: 'Доступ истёк',

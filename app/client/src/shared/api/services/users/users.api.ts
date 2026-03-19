@@ -1,11 +1,12 @@
 import {
+  useInfiniteQuery,
   useMutation,
-  useQuery,
   useQueryClient,
   type QueryClient
 } from '@tanstack/react-query'
 
 import axiosInstance from '@/shared/api/axiosInstance'
+import type { PaginatedResponse } from '@/shared/api/paginated-response'
 import {
   authKeys,
   type AuthUser,
@@ -13,6 +14,25 @@ import {
 } from '@/shared/api/services/auth'
 
 export interface AdminUser extends AuthUser {}
+export interface AdminUsersSummary {
+  active: number
+  admins: number
+  expired: number
+  none: number
+  totalUsers: number
+  trial: number
+}
+
+export type AdminUsersAccessFilter = 'active' | 'trial' | 'expired' | 'none'
+
+export interface AdminUsersFilters {
+  access?: AdminUsersAccessFilter
+  search?: string
+}
+
+interface PaginatedAdminUsersResponse extends PaginatedResponse<AdminUser> {
+  summary: AdminUsersSummary
+}
 
 export type UpdateAdminUserSubscriptionAction =
   | 'grant_month'
@@ -29,13 +49,38 @@ interface UpdateAdminUserSubscriptionPayload {
   userId: string
 }
 
-export const usersKeys = {
-  all: ['users'] as const,
-  list: () => [...usersKeys.all, 'list'] as const
+interface AdminUsersListParams extends AdminUsersFilters {
+  limit: number
+  page: number
 }
 
-const getAdminUsers = async () => {
-  const { data } = await axiosInstance.get<AdminUser[]>('/users')
+const DEFAULT_ADMIN_USERS_PAGE_LIMIT = 12
+
+export const usersKeys = {
+  all: ['users'] as const,
+  list: (
+    filters: AdminUsersFilters = {},
+    limit = DEFAULT_ADMIN_USERS_PAGE_LIMIT
+  ) => [...usersKeys.all, 'list', { filters, limit }] as const
+}
+
+const getAdminUsers = async ({
+  access,
+  limit,
+  page,
+  search
+}: AdminUsersListParams) => {
+  const { data } = await axiosInstance.get<PaginatedAdminUsersResponse>(
+    '/users',
+    {
+      params: {
+        ...(access ? { access } : {}),
+        ...(search ? { search } : {}),
+        limit,
+        page
+      }
+    }
+  )
 
   return data
 }
@@ -76,11 +121,41 @@ const invalidateAdminQueries = async (queryClient: QueryClient) => {
   ])
 }
 
-export const useAdminUsersQuery = () => {
-  return useQuery({
-    queryKey: usersKeys.list(),
-    queryFn: getAdminUsers
+export const useAdminUsersQuery = (
+  filters: AdminUsersFilters = {},
+  limit = DEFAULT_ADMIN_USERS_PAGE_LIMIT
+) => {
+  const query = useInfiniteQuery({
+    queryKey: usersKeys.list(filters, limit),
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      getAdminUsers({
+        ...filters,
+        limit,
+        page: Number(pageParam)
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.page + 1 : undefined
   })
+  const pages = query.data?.pages ?? []
+  const items = pages.flatMap((page) => page.items)
+  const firstPage = pages[0]
+
+  return {
+    ...query,
+    data: items,
+    hasMore: query.hasNextPage,
+    isFetchingMore: query.isFetchingNextPage,
+    summary: firstPage?.summary ?? {
+      active: 0,
+      admins: 0,
+      expired: 0,
+      none: 0,
+      totalUsers: 0,
+      trial: 0
+    },
+    total: firstPage?.total ?? 0
+  }
 }
 
 export const useUpdateAdminUserMutation = () => {

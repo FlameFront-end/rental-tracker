@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
@@ -16,6 +17,8 @@ import { AdminGuard } from '../../common/guards/admin.guard';
 import { AccessTokenGuard } from '../../common/guards/access-token.guard';
 import type { RequestUser } from '../../common/interfaces/request-user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ListUsersQueryDto } from './dto/list-users-query.dto';
+import { PaginatedUsersDto } from './dto/paginated-users.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
 import { UpdateUserSubscriptionDto } from './dto/update-user-subscription.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -41,11 +44,10 @@ export class UsersController {
   @UseGuards(AccessTokenGuard, AdminGuard)
   @ApiAccessTokenAuth()
   @ApiOkResponse({
-    type: UserEntity,
-    isArray: true,
+    type: PaginatedUsersDto,
   })
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: ListUsersQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get('me')

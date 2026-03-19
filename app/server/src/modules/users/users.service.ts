@@ -4,10 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository, SelectQueryBuilder } from 'typeorm';
 
+import { createPaginatedResponse } from '../../common/utils/pagination.util';
 import { isPostgresError } from '../../common/utils/database-error.util';
 import { CreateUserDto } from './dto/create-user.dto';
+import {
+  type AdminUsersAccessFilter,
+  ListUsersQueryDto,
+} from './dto/list-users-query.dto';
 import { type UserSubscriptionAdminAction } from './dto/update-user-subscription.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
@@ -17,11 +22,13 @@ import {
   hasAdminAccess,
   isBootstrapAdminUsername,
   normalizeTelegramUsername,
+  TELEGRAM_BOOTSTRAP_ADMIN_USERNAME,
 } from './utils/admin-access.util';
 
 const TRIAL_DURATION_DAYS = 7;
 const MONTHLY_SUBSCRIPTION_DURATION_DAYS = 30;
 const MS_IN_DAY = 1000 * 60 * 60 * 24;
+const USERS_QUERY_ALIAS = 'user';
 
 @Injectable()
 export class UsersService {
@@ -58,14 +65,30 @@ export class UsersService {
     }
   }
 
-  findAll() {
-    return this.usersRepository
-      .find({
-        order: {
-          createdAt: 'DESC',
-        },
-      })
-      .then((users) => users.map((user) => this.resolveAdminAccess(user)));
+  async findAll(query: ListUsersQueryDto) {
+    const usersQueryBuilder = this.usersRepository
+      .createQueryBuilder(USERS_QUERY_ALIAS)
+      .orderBy(`${USERS_QUERY_ALIAS}.createdAt`, 'DESC');
+
+    this.applyUsersFilters(usersQueryBuilder, query);
+
+    const paginatedUsersQueryBuilder = usersQueryBuilder
+      .clone()
+      .skip((query.page - 1) * query.limit)
+      .take(query.limit);
+
+    const [items, total, summary] = await Promise.all([
+      paginatedUsersQueryBuilder
+        .getMany()
+        .then((users) => users.map((user) => this.resolveAdminAccess(user))),
+      usersQueryBuilder.clone().getCount(),
+      this.getUsersSummary(),
+    ]);
+
+    return {
+      ...createPaginatedResponse(items, query.page, query.limit, total),
+      summary,
+    };
   }
 
   async findByIdOrFail(userId: string) {
@@ -274,5 +297,112 @@ export class UsersService {
     user.isAdmin = hasAdminAccess(user);
 
     return user;
+  }
+
+  private applyUsersFilters(
+    qb: SelectQueryBuilder<UserEntity>,
+    query: ListUsersQueryDto,
+  ) {
+    if (query.search) {
+      const normalizedSearch = query.search.toLowerCase();
+      const normalizedUsernameSearch = normalizedSearch.replace(/^@+/, '');
+
+      qb.andWhere(
+        new Brackets((searchQb) => {
+          searchQb
+            .where(
+              `LOWER(CAST(${USERS_QUERY_ALIAS}.telegram_id AS text)) LIKE :telegramSearch`,
+              {
+                telegramSearch: `%${normalizedSearch}%`,
+              },
+            )
+            .orWhere(
+              `LOWER(CAST(${USERS_QUERY_ALIAS}.id AS text)) LIKE :idSearch`,
+              {
+                idSearch: `%${normalizedSearch}%`,
+              },
+            )
+            .orWhere(
+              `LOWER(COALESCE(${USERS_QUERY_ALIAS}.telegram_username, '')) LIKE :usernameSearch`,
+              {
+                usernameSearch: `%${normalizedUsernameSearch}%`,
+              },
+            );
+        }),
+      );
+    }
+
+    if (query.access) {
+      qb.andWhere(this.buildAccessFilterCondition(query.access)).setParameters(
+        this.getAccessFilterParameters(),
+      );
+    }
+  }
+
+  private async getUsersSummary() {
+    const summaryRow = await this.usersRepository
+      .createQueryBuilder(USERS_QUERY_ALIAS)
+      .select('COUNT(*)', 'totalUsers')
+      .addSelect(
+        `SUM(CASE WHEN ${this.getAdminAccessCondition()} THEN 1 ELSE 0 END)`,
+        'admins',
+      )
+      .addSelect(
+        `SUM(CASE WHEN ${this.buildAccessFilterCondition('active')} THEN 1 ELSE 0 END)`,
+        'active',
+      )
+      .addSelect(
+        `SUM(CASE WHEN ${this.buildAccessFilterCondition('trial')} THEN 1 ELSE 0 END)`,
+        'trial',
+      )
+      .addSelect(
+        `SUM(CASE WHEN ${this.buildAccessFilterCondition('expired')} THEN 1 ELSE 0 END)`,
+        'expired',
+      )
+      .addSelect(
+        `SUM(CASE WHEN ${this.buildAccessFilterCondition('none')} THEN 1 ELSE 0 END)`,
+        'none',
+      )
+      .setParameters({
+        bootstrapAdminUsername: TELEGRAM_BOOTSTRAP_ADMIN_USERNAME.toLowerCase(),
+        ...this.getAccessFilterParameters(),
+      })
+      .getRawOne<Record<string, string | null>>();
+
+    return {
+      active: Number(summaryRow?.active ?? 0),
+      admins: Number(summaryRow?.admins ?? 0),
+      expired: Number(summaryRow?.expired ?? 0),
+      none: Number(summaryRow?.none ?? 0),
+      totalUsers: Number(summaryRow?.totalUsers ?? 0),
+      trial: Number(summaryRow?.trial ?? 0),
+    };
+  }
+
+  private getAdminAccessCondition(alias = USERS_QUERY_ALIAS) {
+    return `(${alias}.is_admin = true OR LOWER(COALESCE(${alias}.telegram_username, '')) = :bootstrapAdminUsername)`;
+  }
+
+  private buildAccessFilterCondition(
+    access: AdminUsersAccessFilter,
+    alias = USERS_QUERY_ALIAS,
+  ) {
+    if (access === 'none') {
+      return `${alias}.subscription_status = :noneStatus`;
+    }
+
+    if (access === 'expired') {
+      return `(${alias}.subscription_status != :noneStatus AND (${alias}.subscription_ends_at IS NULL OR ${alias}.subscription_ends_at <= NOW()))`;
+    }
+
+    return `(${alias}.subscription_status = :${access}Status AND ${alias}.subscription_ends_at IS NOT NULL AND ${alias}.subscription_ends_at > NOW())`;
+  }
+
+  private getAccessFilterParameters() {
+    return {
+      activeStatus: UserSubscriptionStatus.ACTIVE,
+      noneStatus: UserSubscriptionStatus.NONE,
+      trialStatus: UserSubscriptionStatus.TRIAL,
+    };
   }
 }
