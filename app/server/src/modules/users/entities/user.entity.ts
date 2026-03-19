@@ -29,6 +29,18 @@ export class UserEntity {
   })
   telegramId!: string;
 
+  @ApiPropertyOptional({
+    example: 'Artem_Kaliganov',
+    nullable: true,
+  })
+  @Column({
+    name: 'telegram_username',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
+  telegramUsername!: string | null;
+
   @ApiProperty()
   @CreateDateColumn({
     name: 'created_at',
@@ -60,6 +72,16 @@ export class UserEntity {
     default: UserSubscriptionStatus.NONE,
   })
   subscriptionStatus!: UserSubscriptionStatus;
+
+  @ApiProperty({
+    example: false,
+  })
+  @Column({
+    name: 'is_admin',
+    type: 'boolean',
+    default: false,
+  })
+  isAdmin!: boolean;
 
   @ApiPropertyOptional({
     example: '2026-03-26T11:15:00.000Z',

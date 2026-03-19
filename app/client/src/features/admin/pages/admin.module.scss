@@ -1,0 +1,381 @@
+.page {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.heroCard,
+.filtersCard,
+.userItem,
+.emptyState,
+.errorMessage,
+.userSkeleton {
+  border: 1px solid var(--color-border);
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(160deg, var(--color-surface-strong), var(--color-surface)),
+    var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.heroCard {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+}
+
+.heroCopy {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.heroDescription {
+  margin: 0.32rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.metricCard {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.78rem 0.82rem;
+  border-radius: 1rem;
+  background: var(--color-surface-muted);
+}
+
+.metricCard span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.metricCard strong {
+  font-family: var(--font-display);
+  font-size: 1.38rem;
+  line-height: 1;
+}
+
+.chartCard {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border-radius: 1rem;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-soft) 50%, transparent),
+      transparent
+    ),
+    var(--color-surface-muted);
+}
+
+.chartRow {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.chartMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+}
+
+.chartMeta span {
+  color: var(--color-text-muted);
+}
+
+.chartMeta strong {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+}
+
+.chartTrack {
+  height: 0.62rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+  overflow: hidden;
+}
+
+.chartFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.chartFillactive {
+  background: linear-gradient(
+    90deg,
+    var(--color-accent),
+    color-mix(in srgb, var(--color-accent) 65%, white)
+  );
+}
+
+.chartFilltrial {
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-2),
+    color-mix(in srgb, var(--color-accent-2) 70%, white)
+  );
+}
+
+.chartFillexpired {
+  background: linear-gradient(90deg, #f87171, #fb7185);
+}
+
+.chartFillnone {
+  background: linear-gradient(90deg, #7c8aa0, #a5b4cb);
+}
+
+.filtersCard {
+  padding: 0.85rem;
+}
+
+.filtersGrid {
+  display: grid;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.usersCard {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.errorMessage {
+  padding: 0.88rem 0.95rem;
+  background: var(--color-danger-soft);
+  color: var(--color-danger-text);
+  font-weight: 700;
+}
+
+.emptyState {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.05rem;
+  text-align: center;
+}
+
+.emptyState strong {
+  font-size: 1rem;
+}
+
+.emptyState span {
+  color: var(--color-text-muted);
+}
+
+.userList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.userItem,
+.userSkeleton {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+}
+
+.userHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.userIdentity {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.userIdentity strong {
+  font-size: 1rem;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.userIdentity span {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.userBadges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.38rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.badgeactive {
+  background: var(--color-success-soft);
+  color: var(--color-success-text);
+}
+
+.badgetrial {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
+}
+
+.badgeexpired,
+.badgenone {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+.badgeOwner {
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  color: var(--color-text);
+}
+
+.badgeAdmin {
+  background: color-mix(in srgb, var(--color-accent-2) 20%, transparent);
+  color: var(--color-text);
+}
+
+.badgeUser {
+  background: color-mix(
+    in srgb,
+    var(--color-background) 24%,
+    var(--color-surface-muted)
+  );
+  color: var(--color-text-muted);
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 0.55rem;
+}
+
+.metaItem {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.68rem 0.74rem;
+  border-radius: 0.95rem;
+  background: var(--color-surface-muted);
+  min-width: 0;
+}
+
+.metaItem span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.metaItem strong {
+  font-size: 0.92rem;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+
+.staticAction {
+  display: grid;
+  gap: 0.12rem;
+  align-content: center;
+  min-height: 2.8rem;
+  padding: 0.72rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--color-accent-soft) 72%, transparent);
+}
+
+.staticAction strong {
+  font-size: 0.88rem;
+  line-height: 1.1;
+}
+
+.staticAction span {
+  color: var(--color-text-muted);
+  font-size: 0.74rem;
+}
+
+.userSkeletonTitle {
+  width: 9rem;
+  height: 1.3rem;
+}
+
+.userSkeletonMeta {
+  width: 100%;
+  height: 2.8rem;
+  border-radius: 0.95rem;
+}
+
+.userSkeletonActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.userSkeletonButton {
+  height: 2.5rem;
+  border-radius: 0.85rem;
+}
+
+@media (min-width: 900px) {
+  .heroCard {
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+    align-items: stretch;
+  }
+
+  .metricsGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .filtersGrid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.6fr);
+  }
+
+  .actionsGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

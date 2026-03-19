@@ -12,9 +12,12 @@ import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { ApiAccessTokenAuth } from '../../common/decorators/api-access-token-auth.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { AccessTokenGuard } from '../../common/guards/access-token.guard';
 import type { RequestUser } from '../../common/interfaces/request-user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
+import { UpdateUserSubscriptionDto } from './dto/update-user-subscription.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { UsersService } from './users.service';
@@ -25,6 +28,8 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @UseGuards(AccessTokenGuard, AdminGuard)
+  @ApiAccessTokenAuth()
   @ApiCreatedResponse({
     type: UserEntity,
   })
@@ -33,6 +38,8 @@ export class UsersController {
   }
 
   @Get()
+  @UseGuards(AccessTokenGuard, AdminGuard)
+  @ApiAccessTokenAuth()
   @ApiOkResponse({
     type: UserEntity,
     isArray: true,
@@ -52,6 +59,8 @@ export class UsersController {
   }
 
   @Get(':userId')
+  @UseGuards(AccessTokenGuard, AdminGuard)
+  @ApiAccessTokenAuth()
   @ApiOkResponse({
     type: UserEntity,
   })
@@ -62,6 +71,8 @@ export class UsersController {
   }
 
   @Patch(':userId')
+  @UseGuards(AccessTokenGuard, AdminGuard)
+  @ApiAccessTokenAuth()
   @ApiOkResponse({
     type: UserEntity,
   })
@@ -70,5 +81,31 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ) {
     return this.usersService.update(userId, dto);
+  }
+
+  @Patch(':userId/admin')
+  @UseGuards(AccessTokenGuard, AdminGuard)
+  @ApiAccessTokenAuth()
+  @ApiOkResponse({
+    type: UserEntity,
+  })
+  updateAdminStatus(
+    @Param('userId', new ParseUUIDPipe({ version: '4' })) userId: string,
+    @Body() dto: UpdateUserAdminDto,
+  ) {
+    return this.usersService.setAdminStatus(userId, dto.isAdmin);
+  }
+
+  @Patch(':userId/subscription')
+  @UseGuards(AccessTokenGuard, AdminGuard)
+  @ApiAccessTokenAuth()
+  @ApiOkResponse({
+    type: UserEntity,
+  })
+  updateSubscription(
+    @Param('userId', new ParseUUIDPipe({ version: '4' })) userId: string,
+    @Body() dto: UpdateUserSubscriptionDto,
+  ) {
+    return this.usersService.updateSubscription(userId, dto.action);
   }
 }

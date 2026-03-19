@@ -24,7 +24,7 @@
 
 	&:disabled {
 		opacity: 0.55;
-		cursor: wait;
+		cursor: not-allowed;
 		box-shadow: none;
 	}
 }

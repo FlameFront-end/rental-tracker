@@ -16,12 +16,14 @@ interface ValidateTelegramInitDataOptions {
 interface TelegramUserPayload {
   id?: number | string;
   language_code?: string;
+  username?: string;
 }
 
 export interface ValidatedTelegramInitData {
   authDate: number;
   locale: UserLocale;
   telegramId: string;
+  telegramUsername: string | null;
 }
 
 function buildDataCheckString(params: URLSearchParams) {
@@ -118,5 +120,6 @@ export function validateTelegramInitData({
     authDate,
     locale: normalizeUserLocale(telegramUser.language_code),
     telegramId: String(telegramUser.id),
+    telegramUsername: telegramUser.username ?? null,
   };
 }

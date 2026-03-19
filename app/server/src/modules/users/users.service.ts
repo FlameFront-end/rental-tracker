@@ -8,12 +8,19 @@ import { Repository } from 'typeorm';
 
 import { isPostgresError } from '../../common/utils/database-error.util';
 import { CreateUserDto } from './dto/create-user.dto';
+import { type UserSubscriptionAdminAction } from './dto/update-user-subscription.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserLocale } from './enums/user-locale.enum';
 import { UserSubscriptionStatus } from './enums/user-subscription-status.enum';
+import {
+  hasAdminAccess,
+  isBootstrapAdminUsername,
+  normalizeTelegramUsername,
+} from './utils/admin-access.util';
 
 const TRIAL_DURATION_DAYS = 7;
+const MONTHLY_SUBSCRIPTION_DURATION_DAYS = 30;
 const MS_IN_DAY = 1000 * 60 * 60 * 24;
 
 @Injectable()
@@ -25,9 +32,21 @@ export class UsersService {
 
   async create(dto: CreateUserDto) {
     try {
-      const user = this.usersRepository.create(dto);
+      const normalizedTelegramUsername = normalizeTelegramUsername(
+        dto.telegramUsername,
+      );
+      const user = this.usersRepository.create({
+        ...dto,
+        ...(normalizedTelegramUsername
+          ? {
+              telegramUsername: normalizedTelegramUsername,
+            }
+          : {}),
+        isAdmin:
+          dto.isAdmin || isBootstrapAdminUsername(normalizedTelegramUsername),
+      });
 
-      return await this.usersRepository.save(user);
+      return this.resolveAdminAccess(await this.usersRepository.save(user));
     } catch (error) {
       if (isPostgresError(error, '23505', 'uq_users_telegram_id')) {
         throw new ConflictException(
@@ -40,11 +59,13 @@ export class UsersService {
   }
 
   findAll() {
-    return this.usersRepository.find({
-      order: {
-        createdAt: 'DESC',
-      },
-    });
+    return this.usersRepository
+      .find({
+        order: {
+          createdAt: 'DESC',
+        },
+      })
+      .then((users) => users.map((user) => this.resolveAdminAccess(user)));
   }
 
   async findByIdOrFail(userId: string) {
@@ -58,7 +79,7 @@ export class UsersService {
       throw new NotFoundException(`User ${userId} was not found.`);
     }
 
-    return user;
+    return this.resolveAdminAccess(user);
   }
 
   findByTelegramId(telegramId: string) {
@@ -69,17 +90,54 @@ export class UsersService {
     });
   }
 
-  async findOrCreateByTelegramId(telegramId: string, locale?: UserLocale) {
+  async findOrCreateByTelegramId(
+    telegramId: string,
+    locale?: UserLocale,
+    telegramUsername?: string | null,
+  ) {
     const existingUser = await this.findByTelegramId(telegramId);
+    const normalizedTelegramUsername =
+      telegramUsername === undefined
+        ? undefined
+        : normalizeTelegramUsername(telegramUsername);
 
     if (existingUser) {
-      if (locale && existingUser.locale !== locale) {
+      const shouldUpdateLocale = Boolean(
+        locale && existingUser.locale !== locale,
+      );
+      const shouldUpdateUsername =
+        normalizedTelegramUsername !== undefined &&
+        existingUser.telegramUsername !== normalizedTelegramUsername;
+      const shouldGrantBootstrapAdmin =
+        Boolean(normalizedTelegramUsername) &&
+        isBootstrapAdminUsername(normalizedTelegramUsername) &&
+        !existingUser.isAdmin;
+
+      if (
+        shouldUpdateLocale ||
+        shouldUpdateUsername ||
+        shouldGrantBootstrapAdmin
+      ) {
         return this.update(existingUser.id, {
-          locale,
+          ...(shouldUpdateLocale
+            ? {
+                locale,
+              }
+            : {}),
+          ...(shouldUpdateUsername
+            ? {
+                telegramUsername: normalizedTelegramUsername,
+              }
+            : {}),
+          ...(shouldGrantBootstrapAdmin
+            ? {
+                isAdmin: true,
+              }
+            : {}),
         });
       }
 
-      return existingUser;
+      return this.resolveAdminAccess(existingUser);
     }
 
     try {
@@ -89,6 +147,11 @@ export class UsersService {
               locale,
             }
           : {}),
+        ...(normalizedTelegramUsername
+          ? {
+              telegramUsername: normalizedTelegramUsername,
+            }
+          : {}),
         telegramId,
       });
     } catch (error) {
@@ -96,7 +159,7 @@ export class UsersService {
         const user = await this.findByTelegramId(telegramId);
 
         if (user) {
-          return user;
+          return this.resolveAdminAccess(user);
         }
       }
 
@@ -106,11 +169,29 @@ export class UsersService {
 
   async update(userId: string, dto: UpdateUserDto) {
     const user = await this.findByIdOrFail(userId);
+    const normalizedTelegramUsername =
+      dto.telegramUsername === undefined
+        ? undefined
+        : normalizeTelegramUsername(dto.telegramUsername);
 
     try {
-      const nextUser = this.usersRepository.merge(user, dto);
+      const nextUser = this.usersRepository.merge(user, {
+        ...dto,
+        ...(normalizedTelegramUsername !== undefined
+          ? {
+              telegramUsername: normalizedTelegramUsername,
+            }
+          : {}),
+        ...(dto.subscriptionEndsAt !== undefined
+          ? {
+              subscriptionEndsAt: dto.subscriptionEndsAt
+                ? new Date(dto.subscriptionEndsAt)
+                : null,
+            }
+          : {}),
+      });
 
-      return await this.usersRepository.save(nextUser);
+      return this.resolveAdminAccess(await this.usersRepository.save(nextUser));
     } catch (error) {
       if (isPostgresError(error, '23505', 'uq_users_telegram_id')) {
         throw new ConflictException(
@@ -139,12 +220,59 @@ export class UsersService {
       subscriptionStatus: UserSubscriptionStatus.TRIAL,
     });
 
-    return this.usersRepository.save(nextUser);
+    return this.resolveAdminAccess(await this.usersRepository.save(nextUser));
   }
 
   updateLocale(userId: string, locale: UserLocale) {
     return this.update(userId, {
       locale,
     });
+  }
+
+  setAdminStatus(userId: string, isAdmin: boolean) {
+    return this.update(userId, {
+      isAdmin,
+    });
+  }
+
+  async updateSubscription(
+    userId: string,
+    action: UserSubscriptionAdminAction,
+  ) {
+    const user = await this.findByIdOrFail(userId);
+    const now = Date.now();
+
+    if (action === 'clear') {
+      return this.update(userId, {
+        subscriptionEndsAt: null,
+        subscriptionStatus: UserSubscriptionStatus.NONE,
+      });
+    }
+
+    if (action === 'grant_trial') {
+      return this.update(userId, {
+        subscriptionEndsAt: new Date(
+          now + TRIAL_DURATION_DAYS * MS_IN_DAY,
+        ).toISOString(),
+        subscriptionStatus: UserSubscriptionStatus.TRIAL,
+      });
+    }
+
+    const currentSubscriptionEndsAt = user.subscriptionEndsAt?.getTime() ?? 0;
+    const baseTimestamp =
+      currentSubscriptionEndsAt > now ? currentSubscriptionEndsAt : now;
+
+    return this.update(userId, {
+      subscriptionEndsAt: new Date(
+        baseTimestamp + MONTHLY_SUBSCRIPTION_DURATION_DAYS * MS_IN_DAY,
+      ).toISOString(),
+      subscriptionStatus: UserSubscriptionStatus.ACTIVE,
+    });
+  }
+
+  private resolveAdminAccess(user: UserEntity) {
+    user.isAdmin = hasAdminAccess(user);
+
+    return user;
   }
 }

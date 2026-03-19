@@ -39,6 +39,7 @@ export class AuthService {
     const user = await this.usersService.findOrCreateByTelegramId(
       validatedInitData.telegramId,
       dto.locale ?? validatedInitData.locale,
+      validatedInitData.telegramUsername,
     );
 
     return this.buildAuthResponse(user.id, user.telegramId);
@@ -56,6 +57,7 @@ export class AuthService {
     const user = await this.usersService.findOrCreateByTelegramId(
       dto.telegramId,
       dto.locale,
+      dto.telegramUsername,
     );
 
     return this.buildAuthResponse(user.id, user.telegramId);

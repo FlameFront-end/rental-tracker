@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   Matches,
+  MaxLength,
 } from 'class-validator';
 
 import { UserLocale } from '../enums/user-locale.enum';
@@ -22,6 +23,17 @@ export class CreateUserDto {
   telegramId!: string;
 
   @ApiPropertyOptional({
+    example: 'Artem_Kaliganov',
+    nullable: true,
+  })
+  @IsOptional()
+  @Matches(/^@?[A-Za-z0-9_]{5,32}$/, {
+    message: 'telegramUsername must contain only Telegram username characters.',
+  })
+  @MaxLength(64)
+  telegramUsername?: string | null;
+
+  @ApiPropertyOptional({
     example: true,
   })
   @IsOptional()
@@ -34,6 +46,13 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   notificationReminderTomorrowEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isAdmin?: boolean;
 
   @ApiPropertyOptional({
     enum: UserLocale,
