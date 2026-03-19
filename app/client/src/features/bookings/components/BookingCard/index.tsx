@@ -80,7 +80,6 @@ const BookingCard = ({
 						className={styles.iconAction}
 						disabled={isDeleting}
 						aria-label={isEditing ? t('booking.card.editing') : t('booking.card.edit')}
-						title={isEditing ? t('booking.card.editing') : t('booking.card.edit')}
 						onClick={() => onEdit(booking)}
 					>
 						<SquarePen size={16} strokeWidth={1.9} aria-hidden='true' />
@@ -90,7 +89,6 @@ const BookingCard = ({
 						className={`${styles.iconAction} ${styles.deleteAction}`}
 						disabled={isBusy}
 						aria-label={isDeleting ? t('booking.card.deleting') : t('booking.card.delete')}
-						title={isDeleting ? t('booking.card.deleting') : t('booking.card.delete')}
 						onClick={() => onDelete(booking)}
 					>
 						<Trash2 size={17} strokeWidth={1.9} aria-hidden='true' />
@@ -109,11 +107,6 @@ const BookingCard = ({
 							: booking.status === 'paid'
 								? t('booking.card.markPending')
 								: t('booking.card.markPaid')
-					}
-					title={
-						booking.status === 'paid'
-							? t('booking.card.markPending')
-							: t('booking.card.markPaid')
 					}
 					onClick={() => onToggleStatus(booking)}
 				>

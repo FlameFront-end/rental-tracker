@@ -42,7 +42,6 @@ const AssetCard = ({
 					type='button'
 					className={`${styles.iconAction} ${isEditing ? styles.iconActionActive : ''}`}
 					aria-label={isEditing ? t('assetCard.editing') : t('assetCard.edit')}
-					title={isEditing ? t('assetCard.editing') : t('assetCard.edit')}
 					onClick={() => onEdit(asset)}
 				>
 					<SquarePen size={16} strokeWidth={1.9} aria-hidden='true' />
@@ -52,7 +51,6 @@ const AssetCard = ({
 					className={`${styles.iconAction} ${styles.deleteAction}`}
 					disabled={isDeleting}
 					aria-label={isDeleting ? t('assetCard.deleting') : t('assetCard.delete')}
-					title={isDeleting ? t('assetCard.deleting') : t('assetCard.delete')}
 					onClick={() => onDelete(asset)}
 				>
 					<Trash2 size={17} strokeWidth={1.9} aria-hidden='true' />

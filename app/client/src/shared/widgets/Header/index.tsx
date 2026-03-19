@@ -82,7 +82,6 @@ const Header = () => {
 									}
 								}}
 								aria-label={t('header.openSettings')}
-								title={t('header.openSettings')}
 							>
 								<Settings size={18} strokeWidth={1.9} aria-hidden='true' />
 							</button>
@@ -92,7 +91,6 @@ const Header = () => {
 							className={styles.control}
 							onClick={() => setIsLanguageSheetOpen(true)}
 							aria-label={`${t('header.switchLanguage')}: ${APP_LOCALE_LABELS[locale]}`}
-							title={`${t('header.switchLanguage')}: ${APP_LOCALE_LABELS[locale]}`}
 						>
 							<Languages size={18} strokeWidth={1.9} aria-hidden='true' />
 						</button>
@@ -104,11 +102,6 @@ const Header = () => {
 								toggleTheme()
 							}}
 							aria-label={
-								theme === 'dark'
-									? t('header.switchToLightTheme')
-									: t('header.switchToDarkTheme')
-							}
-							title={
 								theme === 'dark'
 									? t('header.switchToLightTheme')
 									: t('header.switchToDarkTheme')
