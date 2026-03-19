@@ -8,6 +8,8 @@ import { useI18n } from '@/app/i18n/use-i18n'
 import { useAuthSession } from '@/app/session/use-auth-session'
 import { useTelegramHaptics } from '@/app/telegram/use-telegram-haptics'
 import { useTheme } from '@/app/theme/theme.context'
+import { useToast } from '@/app/toast/use-toast'
+import { getApiErrorMessage } from '@/shared/lib'
 import {
 	APP_LOCALES,
 	APP_LOCALE_LABELS,
@@ -21,10 +23,12 @@ import styles from './Header.module.scss'
 const Header = () => {
 	const location = useLocation()
 	const navigate = useNavigate()
-	const { isTelegramEnvironment, profile, status, user } = useAuthSession()
-	const { locale, setLocale, t } = useI18n()
+	const { isTelegramEnvironment, profile, setPreferredLocale, status, user } =
+		useAuthSession()
+	const { locale, t } = useI18n()
 	const { theme, toggleTheme } = useTheme()
 	const { selectionChanged } = useTelegramHaptics()
+	const toast = useToast()
 	const [isLanguageSheetOpen, setIsLanguageSheetOpen] = useState(false)
 	const isWorkspaceRoute =
 		status === 'authenticated' && location.pathname !== ROUTES.AUTH
@@ -47,12 +51,17 @@ const Header = () => {
 		[]
 	)
 
-	const handleSelectLocale = (nextLocale: AppLocale) => {
+	const handleSelectLocale = async (nextLocale: AppLocale) => {
 		if (nextLocale !== locale) {
 			selectionChanged()
 		}
-		setLocale(nextLocale)
-		setIsLanguageSheetOpen(false)
+
+		try {
+			await setPreferredLocale(nextLocale)
+			setIsLanguageSheetOpen(false)
+		} catch (error) {
+			toast.error(getApiErrorMessage(error, t('settings.languageSaveFailed')))
+		}
 	}
 
 	return (
@@ -133,7 +142,9 @@ const Header = () => {
 									key={option.value}
 									type='button'
 									className={`${styles.languageOption} ${isActive ? styles.languageOptionActive : ''}`}
-									onClick={() => handleSelectLocale(option.value)}
+									onClick={() => {
+										void handleSelectLocale(option.value)
+									}}
 								>
 									<div className={styles.languageOptionCopy}>
 										<span className={styles.languageCode}>{option.code}</span>

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { ApiAccessTokenAuth } from '../../common/decorators/api-access-token-auth.decorator';
@@ -10,6 +10,7 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { AuthStatusDto } from './dto/auth-status.dto';
 import { DevLoginDto } from './dto/dev-login.dto';
 import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { UpdateCurrentUserLocaleDto } from './dto/update-current-user-locale.dto';
 import { AuthService } from './auth.service';
 
 @ApiTags('auth')
@@ -59,5 +60,18 @@ export class AuthController {
   })
   activateTrial(@CurrentUser() user: RequestUser) {
     return this.authService.activateTrial(user.userId);
+  }
+
+  @Patch('me/locale')
+  @UseGuards(AccessTokenGuard)
+  @ApiAccessTokenAuth()
+  @ApiOkResponse({
+    type: UserEntity,
+  })
+  updateCurrentUserLocale(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: UpdateCurrentUserLocaleDto,
+  ) {
+    return this.authService.updateCurrentUserLocale(user.userId, dto);
   }
 }

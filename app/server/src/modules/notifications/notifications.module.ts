@@ -2,15 +2,22 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { BookingEntity } from '../bookings/entities/booking.entity';
+import { UserEntity } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { NotificationDeliveryEntity } from './entities/notification-delivery.entity';
+import { SubscriptionNotificationDeliveryEntity } from './entities/subscription-notification-delivery.entity';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([BookingEntity, NotificationDeliveryEntity]),
+    TypeOrmModule.forFeature([
+      BookingEntity,
+      NotificationDeliveryEntity,
+      SubscriptionNotificationDeliveryEntity,
+      UserEntity,
+    ]),
   ],
   controllers: [NotificationsController],
   providers: [NotificationsService],

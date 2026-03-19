@@ -176,6 +176,8 @@ export const enTranslations: TranslationDictionary = {
 	'settings.languageTitle': 'App language',
 	'settings.languageDescription':
 		'Choose the app language. Text and date formatting update right away.',
+	'settings.languageSaveFailed':
+		'Failed to save the app language. Please try again.',
 	'settings.themeEyebrow': 'Theme',
 	'settings.themeTitle': 'Appearance',
 	'settings.themeDescription': 'Choose the theme that feels best for daily work.',

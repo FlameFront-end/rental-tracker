@@ -1,11 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import axiosInstance from '@/shared/api/axiosInstance'
+import type { AppLocale } from '@/shared/model'
 
 export type AuthUserSubscriptionStatus = 'none' | 'trial' | 'active'
 
 export interface AuthUser {
 	id: string
+	locale: AppLocale
 	telegramId: string
 	createdAt: string
 	subscriptionEndsAt: string | null
@@ -19,10 +21,16 @@ export interface AuthResponse {
 
 export interface TelegramAuthPayload {
 	initData: string
+	locale?: AppLocale
 }
 
 export interface DevLoginPayload {
 	telegramId: string
+	locale?: AppLocale
+}
+
+export interface UpdateMyLocalePayload {
+	locale: AppLocale
 }
 
 export const authKeys = {
@@ -50,6 +58,12 @@ export const getMe = async () => {
 
 export const activateTrialSubscription = async () => {
 	const { data } = await axiosInstance.post<AuthUser>('/auth/trial')
+
+	return data
+}
+
+export const updateMyLocale = async (payload: UpdateMyLocalePayload) => {
+	const { data } = await axiosInstance.patch<AuthUser>('/auth/me/locale', payload)
 
 	return data
 }

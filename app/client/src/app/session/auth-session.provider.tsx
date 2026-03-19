@@ -21,11 +21,13 @@ import {
 	resolveAuthSubscriptionState
 } from '@/app/session/subscription'
 import { useI18n } from '@/app/i18n/use-i18n'
+import { hasStoredLocale } from '@/app/telegram/app-storage'
 import {
 	authKeys,
 	getMe,
 	loginForDevelopment,
 	loginWithTelegram,
+	updateMyLocale,
 	type AuthResponse,
 	type AuthUser
 } from '@/shared/api/services/auth'
@@ -35,7 +37,7 @@ import {
 	getApiErrorMessage,
 	setAccessToken
 } from '@/shared/lib'
-import { env } from '@/shared/model'
+import { DEFAULT_LOCALE, env, type AppLocale } from '@/shared/model'
 
 interface TelegramInitDataUser {
 	first_name?: string
@@ -77,7 +79,7 @@ const parseTelegramInitDataUser = (rawInitData?: string) => {
 }
 
 export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
-	const { t } = useI18n()
+	const { locale, setLocale, t } = useI18n()
 	const queryClient = useQueryClient()
 	const bootstrapStartedRef = useRef(false)
 	const [status, setStatus] = useState<AuthSessionStatus>('bootstrapping')
@@ -99,8 +101,12 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 			setUser(nextUser)
 			setError(null)
 			setStatus('authenticated')
+
+			if (nextUser.locale !== locale) {
+				setLocale(nextUser.locale)
+			}
 		},
-		[queryClient]
+		[locale, queryClient, setLocale]
 	)
 	const profile = useMemo<AuthSessionProfile | null>(() => {
 		const telegramUser = parseTelegramInitDataUser(rawInitData)
@@ -154,7 +160,12 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 
 			try {
 				const authResponse = await loginWithTelegram({
-					initData: nextInitData
+					initData: nextInitData,
+					...(hasStoredLocale()
+						? {
+								locale
+							}
+						: {})
 				})
 
 				applyAuthenticatedState(authResponse)
@@ -171,7 +182,7 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 				return false
 			}
 		},
-		[applyAuthenticatedState, rawInitData, resetSession, t]
+		[applyAuthenticatedState, locale, rawInitData, resetSession, t]
 	)
 
 	const loginForDev = useCallback(
@@ -186,7 +197,12 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 
 			try {
 				const authResponse = await loginForDevelopment({
-					telegramId
+					telegramId,
+					...(hasStoredLocale()
+						? {
+								locale
+							}
+						: {})
 				})
 
 				applyAuthenticatedState(authResponse)
@@ -203,7 +219,7 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 				return false
 			}
 		},
-		[applyAuthenticatedState, resetSession, t]
+		[applyAuthenticatedState, locale, resetSession, t]
 	)
 
 	const subscriptionState = useMemo(
@@ -213,6 +229,33 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 	const hasSubscriptionAccess = useMemo(
 		() => hasActiveSubscriptionAccess(subscriptionState),
 		[subscriptionState]
+	)
+	const setPreferredLocale = useCallback(
+		async (nextLocale: AppLocale) => {
+			if (nextLocale === locale && (!user || user.locale === nextLocale)) {
+				return
+			}
+
+			const fallbackLocale = user?.locale ?? locale ?? DEFAULT_LOCALE
+
+			setLocale(nextLocale)
+
+			if (!user) {
+				return
+			}
+
+			try {
+				const nextUser = await updateMyLocale({
+					locale: nextLocale
+				})
+
+				applyCurrentUser(nextUser)
+			} catch (error) {
+				setLocale(fallbackLocale)
+				throw error
+			}
+		},
+		[applyCurrentUser, locale, setLocale, user]
 	)
 
 	useEffect(() => {
@@ -228,8 +271,14 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 			if (accessToken) {
 				try {
 					const currentUser = await getMe()
+					const nextUser =
+						hasStoredLocale() && currentUser.locale !== locale
+							? await updateMyLocale({
+									locale
+								})
+							: currentUser
 
-					applyCurrentUser(currentUser)
+					applyCurrentUser(nextUser)
 
 					return
 				} catch {
@@ -275,6 +324,7 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 			loginForDev,
 			loginWithTelegramInitData,
 			profile,
+			setPreferredLocale,
 			status,
 			subscriptionState,
 			updateCurrentUser: applyCurrentUser,
@@ -288,6 +338,7 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 			loginForDev,
 			loginWithTelegramInitData,
 			profile,
+			setPreferredLocale,
 			status,
 			subscriptionState,
 			applyCurrentUser,

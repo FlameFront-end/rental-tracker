@@ -188,6 +188,8 @@ export const ruTranslations: TranslationDictionary = {
 	'settings.languageTitle': 'Язык интерфейса',
 	'settings.languageDescription':
 		'Выберите язык приложения. Тексты и формат дат обновятся сразу.',
+	'settings.languageSaveFailed':
+		'Не удалось сохранить язык приложения. Попробуйте ещё раз.',
 	'settings.themeEyebrow': 'Тема',
 	'settings.themeTitle': 'Оформление',
 	'settings.themeDescription': 'Выберите тему, в которой вам удобнее работать.',

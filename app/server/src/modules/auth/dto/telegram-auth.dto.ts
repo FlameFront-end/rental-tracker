@@ -1,5 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+import { UserLocale } from '../../users/enums/user-locale.enum';
+import { USER_LOCALE_VALUES } from '../../users/utils/user-locale.util';
 
 export class TelegramAuthDto {
   @ApiProperty({
@@ -10,4 +13,13 @@ export class TelegramAuthDto {
   @IsString()
   @IsNotEmpty()
   initData!: string;
+
+  @ApiPropertyOptional({
+    enum: UserLocale,
+    enumName: 'UserLocale',
+    example: UserLocale.EN,
+  })
+  @IsOptional()
+  @IsIn(USER_LOCALE_VALUES)
+  locale?: UserLocale;
 }

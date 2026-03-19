@@ -37,8 +37,8 @@ import styles from './settings.module.scss'
 
 const SettingsPage = () => {
 	const navigate = useNavigate()
-	const { locale, setLocale, t } = useI18n()
-	const { isTelegramEnvironment } = useAuthSession()
+	const { locale, t } = useI18n()
+	const { isTelegramEnvironment, setPreferredLocale } = useAuthSession()
 	const { theme, setTheme } = useTheme()
 	const { error: hapticError, selectionChanged, success } = useTelegramHaptics()
 	const toast = useToast()
@@ -117,15 +117,23 @@ const SettingsPage = () => {
 				: null
 
 	const handleSelectLocale = useCallback(
-		(nextLocale: AppLocale) => {
+		async (nextLocale: AppLocale) => {
 			if (nextLocale === locale) {
 				return
 			}
 
 			selectionChanged()
-			setLocale(nextLocale)
+
+			try {
+				await setPreferredLocale(nextLocale)
+			} catch (updateError) {
+				hapticError()
+				toast.error(
+					getApiErrorMessage(updateError, t('settings.languageSaveFailed'))
+				)
+			}
 		},
-		[locale, selectionChanged, setLocale]
+		[hapticError, locale, selectionChanged, setPreferredLocale, t, toast]
 	)
 
 	const handleSelectTheme = useCallback(
@@ -315,7 +323,9 @@ const SettingsPage = () => {
 									key={option.value}
 									type='button'
 									className={`${styles.optionCard} ${isActive ? styles.optionCardActive : ''}`}
-									onClick={() => handleSelectLocale(option.value)}
+									onClick={() => {
+										void handleSelectLocale(option.value)
+									}}
 									aria-pressed={isActive}
 								>
 									<div className={styles.optionLead}>

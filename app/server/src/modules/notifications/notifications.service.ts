@@ -9,6 +9,9 @@ import {
   addDaysToDateOnly,
 } from '../../common/utils/date.util';
 import { BookingEntity } from '../bookings/entities/booking.entity';
+import { UserEntity } from '../users/entities/user.entity';
+import { UserLocale } from '../users/enums/user-locale.enum';
+import { UserSubscriptionStatus } from '../users/enums/user-subscription-status.enum';
 import { UsersService } from '../users/users.service';
 import { DispatchNotificationsDto } from './dto/dispatch-notifications.dto';
 import { NotificationsPreferencesDto } from './dto/notifications-preferences.dto';
@@ -16,14 +19,22 @@ import { NotificationsDispatchResultDto } from './dto/notifications-dispatch-res
 import { NotificationsStatusDto } from './dto/notifications-status.dto';
 import { UpdateNotificationsPreferencesDto } from './dto/update-notifications-preferences.dto';
 import { NotificationDeliveryEntity } from './entities/notification-delivery.entity';
+import { SubscriptionNotificationDeliveryEntity } from './entities/subscription-notification-delivery.entity';
 import { NotificationDeliveryStatus } from './enums/notification-delivery-status.enum';
 import { NotificationReminderType } from './enums/notification-reminder-type.enum';
+import { SubscriptionNotificationType } from './enums/subscription-notification-type.enum';
+import {
+  formatNotificationDateOnly,
+  formatNotificationDateTime,
+  getNotificationCopy,
+} from './notification-locale.util';
 
 type DueReminderBooking = {
   assetName: string;
   bookingId: string;
   clientName: string;
   endDate: string;
+  locale: UserLocale;
   telegramChatId: string;
   userId: string;
 };
@@ -34,6 +45,23 @@ type RawDueReminderBooking = Omit<DueReminderBooking, 'endDate'> & {
 
 const TODAY_CRON = '0 * * * *';
 const TOMORROW_CRON = '10 * * * *';
+const SUBSCRIPTION_EXPIRY_CRON = '20 * * * *';
+
+type DueSubscriptionNotification = {
+  locale: UserLocale;
+  notificationType: SubscriptionNotificationType;
+  subscriptionEndsAt: string;
+  telegramChatId: string;
+  userId: string;
+};
+
+type RawDueSubscriptionNotification = Omit<
+  DueSubscriptionNotification,
+  'notificationType' | 'subscriptionEndsAt'
+> & {
+  subscriptionEndsAt: Date | string;
+  subscriptionStatus: UserSubscriptionStatus;
+};
 
 @Injectable()
 export class NotificationsService {
@@ -44,12 +72,21 @@ export class NotificationsService {
     private readonly usersService: UsersService,
     @InjectRepository(BookingEntity)
     private readonly bookingsRepository: Repository<BookingEntity>,
+    @InjectRepository(UserEntity)
+    private readonly usersRepository: Repository<UserEntity>,
     @InjectRepository(NotificationDeliveryEntity)
     private readonly deliveriesRepository: Repository<NotificationDeliveryEntity>,
+    @InjectRepository(SubscriptionNotificationDeliveryEntity)
+    private readonly subscriptionDeliveriesRepository: Repository<SubscriptionNotificationDeliveryEntity>,
   ) {}
 
   async getStatus(): Promise<NotificationsStatusDto> {
-    const [sentCount, failedCount] = await Promise.all([
+    const [
+      bookingSentCount,
+      bookingFailedCount,
+      subscriptionSentCount,
+      subscriptionFailedCount,
+    ] = await Promise.all([
       this.deliveriesRepository.count({
         where: {
           status: NotificationDeliveryStatus.SENT,
@@ -60,18 +97,28 @@ export class NotificationsService {
           status: NotificationDeliveryStatus.FAILED,
         },
       }),
+      this.subscriptionDeliveriesRepository.count({
+        where: {
+          status: NotificationDeliveryStatus.SENT,
+        },
+      }),
+      this.subscriptionDeliveriesRepository.count({
+        where: {
+          status: NotificationDeliveryStatus.FAILED,
+        },
+      }),
     ]);
     const botConfigured = this.isBotConfigured();
 
     return {
       status: botConfigured ? 'ready' : 'disabled',
       message: botConfigured
-        ? 'Telegram reminders are configured and scheduled.'
-        : 'Telegram reminders are disabled because TELEGRAM_BOT_TOKEN is empty.',
+        ? 'Telegram reminders and subscription alerts are configured and scheduled.'
+        : 'Telegram reminders and subscription alerts are disabled because TELEGRAM_BOT_TOKEN is empty.',
       botConfigured,
       schedulerEnabled: botConfigured,
-      sentCount,
-      failedCount,
+      sentCount: bookingSentCount + subscriptionSentCount,
+      failedCount: bookingFailedCount + subscriptionFailedCount,
     };
   }
 
@@ -113,6 +160,13 @@ export class NotificationsService {
   })
   async dispatchTomorrowCron() {
     await this.dispatchReminders(NotificationReminderType.TOMORROW);
+  }
+
+  @Cron(SUBSCRIPTION_EXPIRY_CRON, {
+    name: 'notifications-subscription-expiry',
+  })
+  async dispatchSubscriptionExpiryCron() {
+    await this.dispatchSubscriptionExpiryNotifications();
   }
 
   async runManualDispatch(
@@ -269,6 +323,66 @@ export class NotificationsService {
     return result;
   }
 
+  private async dispatchSubscriptionExpiryNotifications() {
+    const dueNotifications = await this.findDueSubscriptionNotifications();
+
+    if (!dueNotifications.length) {
+      return;
+    }
+
+    if (!this.isBotConfigured()) {
+      this.logger.warn(
+        `Skipping ${dueNotifications.length} subscription expiry notifications because TELEGRAM_BOT_TOKEN is not configured.`,
+      );
+
+      return;
+    }
+
+    let sentCount = 0;
+    let skippedCount = 0;
+    let failedCount = 0;
+
+    for (const notification of dueNotifications) {
+      const message = this.buildSubscriptionExpiryMessage(notification);
+      const claimedDelivery =
+        await this.claimSubscriptionDelivery(notification);
+
+      if (!claimedDelivery) {
+        skippedCount += 1;
+        continue;
+      }
+
+      try {
+        await this.sendTelegramMessage(notification.telegramChatId, message);
+        await this.subscriptionDeliveriesRepository.update(claimedDelivery.id, {
+          status: NotificationDeliveryStatus.SENT,
+          sentAt: new Date(),
+          lastError: null,
+        });
+        sentCount += 1;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown Telegram error.';
+
+        await this.subscriptionDeliveriesRepository.update(claimedDelivery.id, {
+          status: NotificationDeliveryStatus.FAILED,
+          lastError: errorMessage,
+        });
+        failedCount += 1;
+
+        this.logger.error(
+          `Failed to send ${notification.notificationType} notification for user ${notification.userId}: ${errorMessage}`,
+        );
+      }
+    }
+
+    if (sentCount || skippedCount || failedCount) {
+      this.logger.log(
+        `Processed subscription expiry notifications: sent=${sentCount}, skipped=${skippedCount}, failed=${failedCount}.`,
+      );
+    }
+  }
+
   private async findDueBookings(
     targetDate: string,
     reminderType: NotificationReminderType,
@@ -282,6 +396,7 @@ export class NotificationsService {
       .addSelect('booking.clientName', 'clientName')
       .addSelect('booking.endDate', 'endDate')
       .addSelect('asset.name', 'assetName')
+      .addSelect('user.locale', 'locale')
       .addSelect('user.id', 'userId')
       .addSelect('user.telegramId', 'telegramChatId')
       .where('booking.endDate = :targetDate', { targetDate })
@@ -374,6 +489,113 @@ export class NotificationsService {
     return this.deliveriesRepository.save(existingDelivery);
   }
 
+  private async findDueSubscriptionNotifications(userId?: string) {
+    const qb = this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.id', 'userId')
+      .addSelect('user.telegramId', 'telegramChatId')
+      .addSelect('user.locale', 'locale')
+      .addSelect('user.subscriptionStatus', 'subscriptionStatus')
+      .addSelect('user.subscriptionEndsAt', 'subscriptionEndsAt')
+      .where('user.subscriptionEndsAt IS NOT NULL')
+      .andWhere('user.subscriptionEndsAt <= :now', {
+        now: new Date().toISOString(),
+      })
+      .andWhere('user.subscriptionStatus IN (:...statuses)', {
+        statuses: [
+          UserSubscriptionStatus.TRIAL,
+          UserSubscriptionStatus.ACTIVE,
+        ],
+      })
+      .orderBy('user.subscriptionEndsAt', 'ASC');
+
+    if (userId) {
+      qb.andWhere('user.id = :userId', {
+        userId,
+      });
+    }
+
+    const rows = await qb.getRawMany<RawDueSubscriptionNotification>();
+
+    return rows.map((row) => ({
+      notificationType:
+        row.subscriptionStatus === UserSubscriptionStatus.TRIAL
+          ? SubscriptionNotificationType.TRIAL_EXPIRED
+          : SubscriptionNotificationType.SUBSCRIPTION_EXPIRED,
+      subscriptionEndsAt: this.formatDateTimeValue(row.subscriptionEndsAt),
+      locale: row.locale,
+      telegramChatId: row.telegramChatId,
+      userId: row.userId,
+    }));
+  }
+
+  private async claimSubscriptionDelivery(
+    notification: DueSubscriptionNotification,
+  ) {
+    const dedupeKey = this.buildSubscriptionDedupeKey(
+      notification.userId,
+      notification.notificationType,
+      notification.subscriptionEndsAt,
+    );
+    const existingDelivery =
+      await this.subscriptionDeliveriesRepository.findOne({
+        where: {
+          dedupeKey,
+        },
+      });
+
+    if (!existingDelivery) {
+      try {
+        return await this.subscriptionDeliveriesRepository.save(
+          this.subscriptionDeliveriesRepository.create({
+            dedupeKey,
+            userId: notification.userId,
+            telegramChatId: notification.telegramChatId,
+            notificationType: notification.notificationType,
+            subscriptionEndsAt: new Date(notification.subscriptionEndsAt),
+            status: NotificationDeliveryStatus.PROCESSING,
+            attemptCount: 1,
+            lastError: null,
+            sentAt: null,
+          }),
+        );
+      } catch (error) {
+        const duplicateDelivery =
+          await this.subscriptionDeliveriesRepository.findOne({
+            where: {
+              dedupeKey,
+            },
+          });
+
+        if (!duplicateDelivery) {
+          throw error;
+        }
+
+        if (duplicateDelivery.status === NotificationDeliveryStatus.SENT) {
+          return null;
+        }
+
+        duplicateDelivery.status = NotificationDeliveryStatus.PROCESSING;
+        duplicateDelivery.attemptCount += 1;
+        duplicateDelivery.lastError = null;
+        duplicateDelivery.telegramChatId = notification.telegramChatId;
+
+        return this.subscriptionDeliveriesRepository.save(duplicateDelivery);
+      }
+    }
+
+    if (existingDelivery.status === NotificationDeliveryStatus.SENT) {
+      return null;
+    }
+
+    existingDelivery.status = NotificationDeliveryStatus.PROCESSING;
+    existingDelivery.attemptCount += 1;
+    existingDelivery.lastError = null;
+    existingDelivery.telegramChatId = notification.telegramChatId;
+
+    return this.subscriptionDeliveriesRepository.save(existingDelivery);
+  }
+
   private buildDedupeKey(
     bookingId: string,
     reminderType: NotificationReminderType,
@@ -382,18 +604,55 @@ export class NotificationsService {
     return `${bookingId}:${reminderType}:${targetDate}`;
   }
 
+  private buildSubscriptionDedupeKey(
+    userId: string,
+    notificationType: SubscriptionNotificationType,
+    subscriptionEndsAt: string,
+  ) {
+    return `${userId}:${notificationType}:${subscriptionEndsAt}`;
+  }
+
   private buildReminderMessage(
     booking: DueReminderBooking,
     reminderType: NotificationReminderType,
   ) {
-    const timingLabel =
-      reminderType === NotificationReminderType.TODAY ? 'today' : 'tomorrow';
+    const copy = getNotificationCopy(booking.locale);
+    const dateLabel = formatNotificationDateOnly(booking.endDate, booking.locale);
 
     return [
-      `Rental reminder: booking ends ${timingLabel}.`,
-      `Bike: ${booking.assetName}`,
-      `Client: ${booking.clientName}`,
-      `End date: ${booking.endDate}`,
+      reminderType === NotificationReminderType.TODAY
+        ? copy.bookingEndsToday
+        : copy.bookingEndsTomorrow,
+      `${copy.bookingItemLabel}: ${booking.assetName}`,
+      `${copy.bookingClientLabel}: ${booking.clientName}`,
+      `${copy.bookingEndDateLabel}: ${dateLabel}`,
+    ].join('\n');
+  }
+
+  private buildSubscriptionExpiryMessage(
+    notification: DueSubscriptionNotification,
+  ) {
+    const copy = getNotificationCopy(notification.locale);
+    const endedAtLabel = formatNotificationDateTime(
+      notification.subscriptionEndsAt,
+      notification.locale,
+    );
+
+    if (
+      notification.notificationType ===
+      SubscriptionNotificationType.TRIAL_EXPIRED
+    ) {
+      return [
+        copy.trialExpiredTitle,
+        `${copy.subscriptionEndedAtLabel}: ${endedAtLabel}`,
+        copy.trialExpiredCta,
+      ].join('\n');
+    }
+
+    return [
+      copy.subscriptionExpiredTitle,
+      `${copy.subscriptionEndedAtLabel}: ${endedAtLabel}`,
+      copy.subscriptionExpiredCta,
     ].join('\n');
   }
 
@@ -417,6 +676,14 @@ export class NotificationsService {
     const day = String(value.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+  }
+
+  private formatDateTimeValue(value: Date | string) {
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    return value.toISOString();
   }
 
   private getTargetDate(reminderType: NotificationReminderType) {

@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  Matches,
+} from 'class-validator';
+
+import { UserLocale } from '../enums/user-locale.enum';
+import { USER_LOCALE_VALUES } from '../utils/user-locale.util';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -25,4 +34,13 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   notificationReminderTomorrowEnabled?: boolean;
+
+  @ApiPropertyOptional({
+    enum: UserLocale,
+    enumName: 'UserLocale',
+    example: UserLocale.EN,
+  })
+  @IsOptional()
+  @IsIn(USER_LOCALE_VALUES)
+  locale?: UserLocale;
 }

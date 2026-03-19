@@ -8,6 +8,7 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { AuthStatusDto } from './dto/auth-status.dto';
 import { DevLoginDto } from './dto/dev-login.dto';
 import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { UpdateCurrentUserLocaleDto } from './dto/update-current-user-locale.dto';
 import { validateTelegramInitData } from './utils/telegram-init-data.util';
 
 @Injectable()
@@ -37,6 +38,7 @@ export class AuthService {
 
     const user = await this.usersService.findOrCreateByTelegramId(
       validatedInitData.telegramId,
+      dto.locale ?? validatedInitData.locale,
     );
 
     return this.buildAuthResponse(user.id, user.telegramId);
@@ -53,6 +55,7 @@ export class AuthService {
 
     const user = await this.usersService.findOrCreateByTelegramId(
       dto.telegramId,
+      dto.locale,
     );
 
     return this.buildAuthResponse(user.id, user.telegramId);
@@ -64,6 +67,10 @@ export class AuthService {
 
   activateTrial(userId: string) {
     return this.usersService.activateTrial(userId);
+  }
+
+  updateCurrentUserLocale(userId: string, dto: UpdateCurrentUserLocaleDto) {
+    return this.usersService.updateLocale(userId, dto.locale);
   }
 
   private async buildAuthResponse(

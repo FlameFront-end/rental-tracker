@@ -172,6 +172,8 @@ const parseBookingDraft = (value?: string) => {
 export const getStoredLocale = (): AppLocale =>
 	parseLocale(readLocalString(STORAGE_KEYS.locale)) ?? DEFAULT_LOCALE
 
+export const hasStoredLocale = () => Boolean(parseLocale(readLocalString(STORAGE_KEYS.locale)))
+
 export const hydrateStoredLocaleIfMissing = async (
 	onHydrated: (locale: AppLocale) => void
 ) => {

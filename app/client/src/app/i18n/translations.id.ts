@@ -176,6 +176,8 @@ export const idTranslations: TranslationDictionary = {
 	'settings.languageTitle': 'Bahasa aplikasi',
 	'settings.languageDescription':
 		'Pilih bahasa aplikasi. Teks dan format tanggal akan langsung berubah.',
+	'settings.languageSaveFailed':
+		'Gagal menyimpan bahasa aplikasi. Coba lagi.',
 	'settings.themeEyebrow': 'Tema',
 	'settings.themeTitle': 'Tampilan',
 	'settings.themeDescription': 'Pilih tema yang paling nyaman untuk dipakai setiap hari.',

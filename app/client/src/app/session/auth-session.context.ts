@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react'
 
 import type { AuthUser } from '@/shared/api/services/auth'
 import type { AuthSubscriptionState } from '@/app/session/subscription'
+import type { AppLocale } from '@/shared/model'
 
 export type AuthSessionStatus = 'bootstrapping' | 'authenticated' | 'unauthenticated'
 
@@ -20,6 +21,7 @@ export interface AuthSessionContextValue {
 	loginForDev: (telegramId?: string) => Promise<boolean>
 	loginWithTelegramInitData: (initData?: string) => Promise<boolean>
 	profile: AuthSessionProfile | null
+	setPreferredLocale: (locale: AppLocale) => Promise<void>
 	status: AuthSessionStatus
 	subscriptionState: AuthSubscriptionState
 	updateCurrentUser: (user: AuthUser) => void

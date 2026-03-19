@@ -4,6 +4,9 @@ import {
 } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
+import { UserLocale } from '../../users/enums/user-locale.enum';
+import { normalizeUserLocale } from '../../users/utils/user-locale.util';
+
 interface ValidateTelegramInitDataOptions {
   botToken: string;
   initData: string;
@@ -12,10 +15,12 @@ interface ValidateTelegramInitDataOptions {
 
 interface TelegramUserPayload {
   id?: number | string;
+  language_code?: string;
 }
 
 export interface ValidatedTelegramInitData {
   authDate: number;
+  locale: UserLocale;
   telegramId: string;
 }
 
@@ -111,6 +116,7 @@ export function validateTelegramInitData({
 
   return {
     authDate,
+    locale: normalizeUserLocale(telegramUser.language_code),
     telegramId: String(telegramUser.id),
   };
 }

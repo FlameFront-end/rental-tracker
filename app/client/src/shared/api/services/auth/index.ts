@@ -4,6 +4,7 @@ export {
 	getMe,
 	loginForDevelopment,
 	loginWithTelegram,
+	updateMyLocale,
 	useDevAuthMutation,
 	useMeQuery,
 	useTelegramAuthMutation
@@ -13,5 +14,6 @@ export type {
 	AuthUser,
 	AuthUserSubscriptionStatus,
 	DevLoginPayload,
-	TelegramAuthPayload
+	TelegramAuthPayload,
+	UpdateMyLocalePayload
 } from './auth.api'

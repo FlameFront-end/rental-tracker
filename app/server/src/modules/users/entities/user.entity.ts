@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 
 import { AssetEntity } from '../../assets/entities/asset.entity';
+import { UserLocale } from '../enums/user-locale.enum';
 import { UserSubscriptionStatus } from '../enums/user-subscription-status.enum';
 
 @Entity({ name: 'users' })
@@ -34,6 +35,18 @@ export class UserEntity {
     type: 'timestamptz',
   })
   createdAt!: Date;
+
+  @ApiProperty({
+    enum: UserLocale,
+    example: UserLocale.EN,
+  })
+  @Column({
+    type: 'enum',
+    enum: UserLocale,
+    enumName: 'user_locale_enum',
+    default: UserLocale.EN,
+  })
+  locale!: UserLocale;
 
   @ApiProperty({
     enum: UserSubscriptionStatus,

@@ -10,6 +10,7 @@ import { isPostgresError } from '../../common/utils/database-error.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
+import { UserLocale } from './enums/user-locale.enum';
 import { UserSubscriptionStatus } from './enums/user-subscription-status.enum';
 
 const TRIAL_DURATION_DAYS = 7;
@@ -68,15 +69,26 @@ export class UsersService {
     });
   }
 
-  async findOrCreateByTelegramId(telegramId: string) {
+  async findOrCreateByTelegramId(telegramId: string, locale?: UserLocale) {
     const existingUser = await this.findByTelegramId(telegramId);
 
     if (existingUser) {
+      if (locale && existingUser.locale !== locale) {
+        return this.update(existingUser.id, {
+          locale,
+        });
+      }
+
       return existingUser;
     }
 
     try {
       return await this.create({
+        ...(locale
+          ? {
+              locale,
+            }
+          : {}),
         telegramId,
       });
     } catch (error) {
@@ -128,5 +140,11 @@ export class UsersService {
     });
 
     return this.usersRepository.save(nextUser);
+  }
+
+  updateLocale(userId: string, locale: UserLocale) {
+    return this.update(userId, {
+      locale,
+    });
   }
 }
