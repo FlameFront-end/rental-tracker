@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseBoolPipe,
   ParseUUIDPipe,
   Patch,
   Post,
@@ -94,7 +96,11 @@ export class AssetsController {
   async remove(
     @CurrentUser() user: RequestUser,
     @Param('assetId', new ParseUUIDPipe({ version: '4' })) assetId: string,
+    @Query('removeRelatedBookings', new DefaultValuePipe(false), ParseBoolPipe)
+    removeRelatedBookings: boolean,
   ) {
-    await this.assetsService.remove(user.userId, assetId);
+    await this.assetsService.remove(user.userId, assetId, {
+      removeRelatedBookings,
+    });
   }
 }

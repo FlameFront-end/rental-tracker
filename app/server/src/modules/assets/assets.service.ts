@@ -16,6 +16,16 @@ import { ListAssetsQueryDto } from './dto/list-assets-query.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
 import { AssetEntity } from './entities/asset.entity';
 
+interface RemoveAssetOptions {
+  removeRelatedBookings?: boolean;
+}
+
+interface AssetBookingStats {
+  activeOrFutureBookings: number;
+  historyBookings: number;
+  totalBookings: number;
+}
+
 @Injectable()
 export class AssetsService {
   constructor(
@@ -85,32 +95,77 @@ export class AssetsService {
     return this.assetsRepository.save(nextAsset);
   }
 
-  async remove(userId: string, assetId: string) {
+  async remove(
+    userId: string,
+    assetId: string,
+    options: RemoveAssetOptions = {},
+  ) {
     const asset = await this.findOwnedAssetOrFail(userId, assetId);
-    const today = getCurrentDateOnly();
-    const activeOrFutureBookings = await this.bookingsRepository.count({
-      where: {
-        assetId: asset.id,
-        endDate: MoreThanOrEqual(today),
-      },
-    });
+    const bookingStats = await this.getAssetBookingStats(asset.id);
 
-    if (activeOrFutureBookings > 0) {
-      throw new ConflictException(
-        'Asset cannot be removed because it has active or future bookings.',
-      );
+    if (bookingStats.totalBookings > 0 && !options.removeRelatedBookings) {
+      throw this.buildRemoveConflict(bookingStats);
     }
 
     try {
+      if (options.removeRelatedBookings) {
+        await this.assetsRepository.manager.transaction(async (manager) => {
+          await manager.delete(BookingEntity, {
+            assetId: asset.id,
+          });
+          await manager.delete(AssetEntity, {
+            id: asset.id,
+          });
+        });
+
+        return;
+      }
+
       await this.assetsRepository.remove(asset);
     } catch (error) {
       if (isPostgresError(error, '23503', 'fk_bookings_asset_id')) {
-        throw new ConflictException(
-          'Asset cannot be removed because booking history still exists.',
+        throw this.buildRemoveConflict(
+          await this.getAssetBookingStats(asset.id),
         );
       }
 
       throw error;
     }
+  }
+
+  private async getAssetBookingStats(
+    assetId: string,
+  ): Promise<AssetBookingStats> {
+    const today = getCurrentDateOnly();
+    const [totalBookings, activeOrFutureBookings] = await Promise.all([
+      this.bookingsRepository.count({
+        where: {
+          assetId,
+        },
+      }),
+      this.bookingsRepository.count({
+        where: {
+          assetId,
+          endDate: MoreThanOrEqual(today),
+        },
+      }),
+    ]);
+
+    return {
+      totalBookings,
+      activeOrFutureBookings,
+      historyBookings: Math.max(totalBookings - activeOrFutureBookings, 0),
+    };
+  }
+
+  private buildRemoveConflict(stats: AssetBookingStats) {
+    return new ConflictException({
+      code: 'ASSET_HAS_BOOKINGS',
+      details: stats,
+      message:
+        stats.activeOrFutureBookings > 0
+          ? 'Asset cannot be removed because it has active or future bookings.'
+          : 'Asset cannot be removed because booking history still exists.',
+    });
   }
 }
