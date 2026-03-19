@@ -78,11 +78,18 @@ const ScreenSheet = ({
 		return null
 	}
 
+	const handleBackdropClick = (event: MouseEvent<HTMLElement>) => {
+		event.stopPropagation()
+		onClose()
+	}
+
 	const handleContentClick = (event: MouseEvent<HTMLElement>) => {
 		event.stopPropagation()
 	}
 
 	const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
+		event.stopPropagation()
+
 		if (!swipeToClose) {
 			return
 		}
@@ -104,6 +111,8 @@ const ScreenSheet = ({
 	}
 
 	const handleTouchMove = (event: TouchEvent<HTMLElement>) => {
+		event.stopPropagation()
+
 		if (!swipeToClose) {
 			return
 		}
@@ -149,7 +158,9 @@ const ScreenSheet = ({
 		setIsDragging(false)
 	}
 
-	const handleTouchEnd = () => {
+	const handleTouchEnd = (event: TouchEvent<HTMLElement>) => {
+		event.stopPropagation()
+
 		if (!swipeToClose) {
 			resetSwipeState()
 			setDragOffset(0)
@@ -180,7 +191,7 @@ const ScreenSheet = ({
 	const dragProgress = Math.min(dragOffset / SWIPE_CLOSE_DISTANCE_PX, 1)
 
 	return createPortal(
-		<div className={styles.backdrop} onClick={onClose}>
+		<div className={styles.backdrop} onClick={handleBackdropClick}>
 			<section
 				className={`${styles.sheet} ${isDragging ? styles.sheetDragging : ''}`.trim()}
 				role='dialog'
