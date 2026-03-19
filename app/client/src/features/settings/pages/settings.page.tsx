@@ -198,82 +198,6 @@ const SettingsPage = () => {
 			<div className={styles.page}>
 				<section className={styles.sectionCard}>
 					<div className={styles.sectionHeader}>
-						<span className={styles.eyebrow}>{t('settings.languageEyebrow')}</span>
-						<h2 className={styles.sectionTitle}>{t('settings.languageTitle')}</h2>
-						<p className={styles.sectionDescription}>
-							{t('settings.languageDescription')}
-						</p>
-					</div>
-
-					<div className={styles.optionList}>
-						{languageOptions.map((option) => {
-							const isActive = option.value === locale
-
-							return (
-								<button
-									key={option.value}
-									type='button'
-									className={`${styles.optionCard} ${isActive ? styles.optionCardActive : ''}`}
-									onClick={() => handleSelectLocale(option.value)}
-									aria-pressed={isActive}
-								>
-									<div className={styles.optionLead}>
-										<span className={styles.optionCode}>{option.code}</span>
-										<div className={styles.optionCopy}>
-											<strong>{option.label}</strong>
-										</div>
-									</div>
-									<span className={styles.optionCheck} aria-hidden='true'>
-										{isActive ? <Check size={18} strokeWidth={2.1} /> : null}
-									</span>
-								</button>
-							)
-						})}
-					</div>
-				</section>
-
-				<section className={styles.sectionCard}>
-					<div className={styles.sectionHeader}>
-						<span className={styles.eyebrow}>{t('settings.themeEyebrow')}</span>
-						<h2 className={styles.sectionTitle}>{t('settings.themeTitle')}</h2>
-						<p className={styles.sectionDescription}>
-							{t('settings.themeDescription')}
-						</p>
-					</div>
-
-					<div className={styles.optionList}>
-						{themeOptions.map((option) => {
-							const isActive = option.value === theme
-							const Icon = option.icon
-
-							return (
-								<button
-									key={option.value}
-									type='button'
-									className={`${styles.optionCard} ${isActive ? styles.optionCardActive : ''}`}
-									onClick={() => handleSelectTheme(option.value)}
-									aria-pressed={isActive}
-								>
-									<div className={styles.optionLead}>
-										<span className={styles.optionIcon} aria-hidden='true'>
-											<Icon size={18} strokeWidth={1.9} />
-										</span>
-										<div className={styles.optionCopy}>
-											<strong>{option.label}</strong>
-											<span>{option.description}</span>
-										</div>
-									</div>
-									<span className={styles.optionCheck} aria-hidden='true'>
-										{isActive ? <Check size={18} strokeWidth={2.1} /> : null}
-									</span>
-								</button>
-							)
-						})}
-					</div>
-				</section>
-
-				<section className={styles.sectionCard}>
-					<div className={styles.sectionHeader}>
 						<span className={styles.eyebrow}>{t('settings.notificationsEyebrow')}</span>
 						<h2 className={styles.sectionTitle}>{t('settings.notificationsTitle')}</h2>
 						<p className={styles.sectionDescription}>
@@ -357,6 +281,82 @@ const SettingsPage = () => {
 								</label>
 							</>
 						)}
+					</div>
+				</section>
+
+				<section className={styles.sectionCard}>
+					<div className={styles.sectionHeader}>
+						<span className={styles.eyebrow}>{t('settings.languageEyebrow')}</span>
+						<h2 className={styles.sectionTitle}>{t('settings.languageTitle')}</h2>
+						<p className={styles.sectionDescription}>
+							{t('settings.languageDescription')}
+						</p>
+					</div>
+
+					<div className={styles.optionList}>
+						{languageOptions.map((option) => {
+							const isActive = option.value === locale
+
+							return (
+								<button
+									key={option.value}
+									type='button'
+									className={`${styles.optionCard} ${isActive ? styles.optionCardActive : ''}`}
+									onClick={() => handleSelectLocale(option.value)}
+									aria-pressed={isActive}
+								>
+									<div className={styles.optionLead}>
+										<span className={styles.optionCode}>{option.code}</span>
+										<div className={styles.optionCopy}>
+											<strong>{option.label}</strong>
+										</div>
+									</div>
+									<span className={styles.optionCheck} aria-hidden='true'>
+										{isActive ? <Check size={18} strokeWidth={2.1} /> : null}
+									</span>
+								</button>
+							)
+						})}
+					</div>
+				</section>
+
+				<section className={styles.sectionCard}>
+					<div className={styles.sectionHeader}>
+						<span className={styles.eyebrow}>{t('settings.themeEyebrow')}</span>
+						<h2 className={styles.sectionTitle}>{t('settings.themeTitle')}</h2>
+						<p className={styles.sectionDescription}>
+							{t('settings.themeDescription')}
+						</p>
+					</div>
+
+					<div className={styles.optionList}>
+						{themeOptions.map((option) => {
+							const isActive = option.value === theme
+							const Icon = option.icon
+
+							return (
+								<button
+									key={option.value}
+									type='button'
+									className={`${styles.optionCard} ${isActive ? styles.optionCardActive : ''}`}
+									onClick={() => handleSelectTheme(option.value)}
+									aria-pressed={isActive}
+								>
+									<div className={styles.optionLead}>
+										<span className={styles.optionIcon} aria-hidden='true'>
+											<Icon size={18} strokeWidth={1.9} />
+										</span>
+										<div className={styles.optionCopy}>
+											<strong>{option.label}</strong>
+											<span>{option.description}</span>
+										</div>
+									</div>
+									<span className={styles.optionCheck} aria-hidden='true'>
+										{isActive ? <Check size={18} strokeWidth={2.1} /> : null}
+									</span>
+								</button>
+							)
+						})}
 					</div>
 				</section>
 			</div>

@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { useI18n } from '@/app/i18n/use-i18n'
 import { useAuthSession } from '@/app/session/use-auth-session'
 import type { Booking, BookingFormValues } from '@/shared/api/services/bookings'
-import { Button, SelectField, TextField } from '@/shared/kit'
+import { Button, DateField, SelectField, TextField } from '@/shared/kit'
 import { addDaysToDateOnly, getTodayDateOnly } from '@/shared/lib'
 
 import styles from './BookingFormCard.module.scss'
@@ -88,6 +88,7 @@ const BookingFormCard = ({
 		}
 	]
 	const {
+		control,
 		formState: { errors, isDirty },
 		handleSubmit,
 		register,
@@ -125,7 +126,6 @@ const BookingFormCard = ({
 				<h2 className={styles.title}>
 					{isEditMode ? t('booking.form.updateTitle') : t('booking.form.createTitle')}
 				</h2>
-				<p className={styles.description}>{t('booking.form.description')}</p>
 			</header>
 
 			<form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
@@ -145,19 +145,37 @@ const BookingFormCard = ({
 				/>
 
 				<div className={styles.row}>
-					<TextField
-						id='booking-start-date'
-						type='date'
-						label={t('booking.form.startDateLabel')}
-						error={errors.startDate?.message}
-						{...register('startDate')}
+					<Controller
+						name='startDate'
+						control={control}
+						render={({ field }) => (
+							<DateField
+								id='booking-start-date'
+								label={t('booking.form.startDateLabel')}
+								error={errors.startDate?.message}
+								max={watchedValues.endDate}
+								required
+								value={field.value}
+								onBlur={field.onBlur}
+								onChange={field.onChange}
+							/>
+						)}
 					/>
-					<TextField
-						id='booking-end-date'
-						type='date'
-						label={t('booking.form.endDateLabel')}
-						error={errors.endDate?.message}
-						{...register('endDate')}
+					<Controller
+						name='endDate'
+						control={control}
+						render={({ field }) => (
+							<DateField
+								id='booking-end-date'
+								label={t('booking.form.endDateLabel')}
+								error={errors.endDate?.message}
+								min={watchedValues.startDate}
+								required
+								value={field.value}
+								onBlur={field.onBlur}
+								onChange={field.onChange}
+							/>
+						)}
 					/>
 				</div>
 

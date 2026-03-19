@@ -17,6 +17,7 @@
 .sheet {
 	position: relative;
 	display: grid;
+	grid-template-rows: minmax(0, 1fr);
 	width: min(100%, 40rem);
 	max-height: calc(
 		var(--tg-viewport-stable-height, 100vh) - 1.5rem - var(--app-safe-top) - var(--app-safe-bottom)
@@ -31,6 +32,14 @@
 	overflow: hidden;
 	animation: sheet-enter 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
 	transform-origin: bottom center;
+	transition:
+		transform 0.2s ease,
+		opacity 0.2s ease;
+	will-change: transform, opacity;
+}
+
+.sheetDragging {
+	transition: none;
 }
 
 .closeButton {
@@ -77,7 +86,12 @@
 }
 
 .body {
+	min-width: 0;
+	min-height: 0;
 	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
 }
 
 @keyframes fade-in {

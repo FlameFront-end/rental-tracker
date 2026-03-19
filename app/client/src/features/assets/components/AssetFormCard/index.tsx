@@ -76,7 +76,6 @@ const AssetFormCard = ({
 				<h2 className={styles.title}>
 					{isEditMode ? t('assetForm.updateTitle') : t('assetForm.addTitle')}
 				</h2>
-				<p className={styles.description}>{t('assetForm.description')}</p>
 			</header>
 
 			<form className={styles.form} onSubmit={handleSubmit(onSubmit)}>

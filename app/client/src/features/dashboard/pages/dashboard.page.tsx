@@ -12,7 +12,7 @@ import {
 	useDeleteBookingMutation,
 	useUpdateBookingStatusMutation
 } from '@/shared/api/services/bookings'
-import { Button, Skeleton } from '@/shared/kit'
+import { Skeleton } from '@/shared/kit'
 import { getApiErrorMessage } from '@/shared/lib'
 import { ROUTES } from '@/shared/model'
 import { Layout } from '@/shared/widgets'
@@ -156,17 +156,6 @@ const DashboardPage = () => {
 			subtitle={t('dashboard.subtitle')}
 		>
 			<div className={styles.page}>
-				<section className={styles.summaryBar}>
-					<div className={styles.actions}>
-						<Button type='button' onClick={() => navigate(ROUTES.BOOKINGS)}>
-							{t('dashboard.newRental')}
-						</Button>
-						<Button type='button' variant='secondary' onClick={() => navigate(ROUTES.CALENDAR)}>
-							{t('dashboard.weekView')}
-						</Button>
-					</div>
-				</section>
-
 				{listError ? <p className={styles.error}>{listError}</p> : null}
 				{summaryError ? (
 					<p className={styles.error}>
