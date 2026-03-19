@@ -92,6 +92,10 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
       return undefined
     }
   }, [])
+  const telegramInitDataUser = useMemo(
+    () => parseTelegramInitDataUser(rawInitData),
+    [rawInitData]
+  )
 
   const isTelegramEnvironment = Boolean(rawInitData)
   const canUseDevelopmentLogin =
@@ -110,12 +114,11 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
     [locale, queryClient, setLocale]
   )
   const profile = useMemo<AuthSessionProfile | null>(() => {
-    const telegramUser = parseTelegramInitDataUser(rawInitData)
     const displayName =
-      [telegramUser?.first_name, telegramUser?.last_name]
+      [telegramInitDataUser?.first_name, telegramInitDataUser?.last_name]
         .filter(Boolean)
         .join(' ') ||
-      telegramUser?.username ||
+      telegramInitDataUser?.username ||
       (user?.telegramUsername ? `@${user.telegramUsername}` : '') ||
       (user ? `ID ${user.telegramId}` : '')
 
@@ -126,10 +129,11 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
     return {
       displayName,
       initials: buildInitials(displayName),
-      photoUrl: telegramUser?.photo_url,
-      username: telegramUser?.username ?? user?.telegramUsername ?? undefined
+      photoUrl: telegramInitDataUser?.photo_url,
+      username:
+        telegramInitDataUser?.username ?? user?.telegramUsername ?? undefined
     }
-  }, [rawInitData, user])
+  }, [telegramInitDataUser, user])
 
   const applyAuthenticatedState = useCallback(
     (authResponse: AuthResponse) => {
@@ -275,6 +279,31 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
       if (accessToken) {
         try {
           const currentUser = await getMe()
+          const currentTelegramUsername = currentUser.telegramUsername ?? null
+          const nextTelegramUsername = telegramInitDataUser?.username ?? null
+          const shouldRefreshTelegramSession =
+            Boolean(rawInitData) &&
+            currentTelegramUsername !== nextTelegramUsername
+
+          if (shouldRefreshTelegramSession && rawInitData) {
+            try {
+              const authResponse = await loginWithTelegram({
+                initData: rawInitData,
+                ...(hasStoredLocale()
+                  ? {
+                      locale
+                    }
+                  : {})
+              })
+
+              applyAuthenticatedState(authResponse)
+
+              return
+            } catch {
+              // Keep the existing session if Telegram refresh fails.
+            }
+          }
+
           const nextUser =
             hasStoredLocale() && currentUser.locale !== locale
               ? await updateMyLocale({
@@ -310,12 +339,15 @@ export const AuthSessionProvider = ({ children }: PropsWithChildren) => {
 
     void bootstrapSession()
   }, [
+    applyAuthenticatedState,
     applyCurrentUser,
     loginForDev,
     loginWithTelegramInitData,
+    locale,
     queryClient,
     rawInitData,
     resetSession,
+    telegramInitDataUser,
     t
   ])
 
